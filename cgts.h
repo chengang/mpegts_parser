@@ -17,6 +17,16 @@ struct cgts_context {
     uint8_t * input_ptr;
 };
 
+struct cgts_ts_packet {
+    uint8_t sync_byte;
+    uint8_t unit_start_indicator;
+    uint8_t priority;
+    uint16_t pid;
+    uint8_t scrambling_control;
+    uint8_t adaption_field;
+    uint8_t continuity_counter;
+};
+
 struct cgts_context * cgts_alloc_with_memory(uint8_t * buf);
 struct cgts_context * cgts_alloc_with_file(const char * filename);
 void cgts_free(struct cgts_context * context);
