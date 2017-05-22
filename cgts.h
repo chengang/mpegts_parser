@@ -1,3 +1,6 @@
+#ifndef __CGTS_H__
+#define __CGTS_H__
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -20,3 +23,5 @@ void cgts_free(struct cgts_context * context);
 
 bool cgts_get188(struct cgts_context * context, uint8_t * buf);
 void cgts_parse(struct cgts_context * context);
+
+#endif
