@@ -24,8 +24,10 @@ struct cgts_ts_packet * cgts_ts_packet_alloc() {
 
 bool cgts_ts_packet_parse(struct cgts_ts_packet * tsp, uint8_t * buf) {
     tsp->sync_byte = buf[0];
-    tsp->unit_start_indicator = buf[1] & 0x40;
+    tsp->unit_start_indicator = (buf[1] & 0x40) >> 6;
     tsp->pid = (buf[1] & 0x1f) * 256 + buf[2];
+    tsp->scrambling_control = (buf[3] >> 4) & 0xc;
+    tsp->adaption_field_control = (buf[3] >> 4) & 0x3;
     tsp->continuity_counter = (buf[3] & 0xf);
     return true;
 }
@@ -51,9 +53,9 @@ bool cgts_get188(struct cgts_context * ct, uint8_t * buf) {
 }
 
 void cgts_ts_packet_debug(struct cgts_ts_packet * tsp) {
-    fprintf(stdout, "sync_byte:%x, start_flag:%d, priority:%d, pid:%d, cc:%d\n",
+    fprintf(stdout, "sync_byte:%x, start_flag:%d, pid:%d, cc:%d\n",
             tsp->sync_byte, tsp->unit_start_indicator, 
-            tsp->priority, tsp->pid, tsp->continuity_counter
+            tsp->pid, tsp->continuity_counter
             );
 }
 

@@ -20,10 +20,9 @@ struct cgts_context {
 struct cgts_ts_packet {
     uint8_t sync_byte;
     uint8_t unit_start_indicator;
-    uint8_t priority;
     uint16_t pid;
     uint8_t scrambling_control;
-    uint8_t adaption_field;
+    uint8_t adaption_field_control;
     uint8_t continuity_counter;
 };
 
