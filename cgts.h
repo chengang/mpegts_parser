@@ -15,7 +15,8 @@ struct cgts_context {
     uint8_t input_type; // 1-file, 2-memory
     FILE * input_fp;
     uint8_t * input_ptr;
-    int8_t cc;
+    int8_t ccounter;
+    uint64_t pcr;
 };
 
 struct cgts_ts_packet {

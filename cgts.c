@@ -2,7 +2,7 @@
 // todo..
 struct cgts_context * cgts_alloc(uint8_t * buf) {
     struct cgts_context * context = calloc(1, sizeof(struct cgts_context));
-    context->cc = -1;
+    context->ccounter = -1;
     return context;
 }
 
@@ -24,7 +24,7 @@ struct cgts_ts_packet * cgts_ts_packet_alloc() {
     return tsp;
 }
 
-bool cgts_ts_packet_parse(struct cgts_ts_packet * tsp, uint8_t * buf) {
+bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp, uint8_t * buf) {
     tsp->sync_byte = buf[0];
     tsp->unit_start_indicator = (buf[1] & 0x40) >> 6;
     tsp->pid = (buf[1] & 0x1f) * 256 + buf[2];
@@ -34,6 +34,23 @@ bool cgts_ts_packet_parse(struct cgts_ts_packet * tsp, uint8_t * buf) {
 
     tsp->has_adaptation = (tsp->adaption_field_control & 2) >> 1;
     tsp->has_payload = tsp->adaption_field_control & 1;
+
+    if (tsp->has_adaptation) {
+        uint8_t adaptation_len = buf[4];
+        uint8_t adaptation_flags = buf[5];
+
+        if (!(adaptation_flags & 0x10)) {   // PCR_flag
+            return false;
+        }
+        if (adaptation_len < 7) { // PCR need 6btye + 1byte flags
+            return false;
+        }
+        int64_t pcr_high = buf[6] * 256 * 256 * 256 + buf[7] * 256 * 256 + buf[8] * 256 + buf[9];
+        pcr_high = (pcr_high << 1) | (buf[10] >> 7);
+        int pcr_low = ((buf[10] & 1) << 8) | buf[11];
+        ct->pcr = pcr_high * 300 + pcr_low;
+        fprintf(stdout, "pcr: %lld\n", ct->pcr);
+    }
 
     return true;
 }
@@ -66,22 +83,22 @@ void cgts_ts_packet_debug(struct cgts_ts_packet * tsp) {
             );
 }
 
-bool cgts_analyze_ts_packet(uint8_t * buf) {
+bool cgts_analyze_ts_packet(struct cgts_context * ct, uint8_t * buf) {
     //printf("%02x\n", buf[187]);
 
     struct cgts_ts_packet * tsp = cgts_ts_packet_alloc();
-    cgts_ts_packet_parse(tsp, buf);
+    cgts_ts_packet_parse(ct, tsp, buf);
     cgts_ts_packet_debug(tsp);
     cgts_ts_packet_free(tsp);
     return true;
 }
 
-void cgts_parse(struct cgts_context * context) {
+void cgts_parse(struct cgts_context * ct) {
     uint8_t ts_packet_buf[CGTS_PACKET_SIZE];
     while(true) {
-        if (cgts_get188(context, ts_packet_buf) == false) {
+        if (cgts_get188(ct, ts_packet_buf) == false) {
             break;
         }
-        cgts_analyze_ts_packet(ts_packet_buf);
+        cgts_analyze_ts_packet(ct, ts_packet_buf);
     }
 }
