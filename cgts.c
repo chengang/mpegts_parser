@@ -2,6 +2,7 @@
 // todo..
 struct cgts_context * cgts_alloc(uint8_t * buf) {
     struct cgts_context * context = calloc(1, sizeof(struct cgts_context));
+    context->cc = -1;
     return context;
 }
 
@@ -19,7 +20,8 @@ void cgts_free(struct cgts_context * context) {
 }
 
 struct cgts_ts_packet * cgts_ts_packet_alloc() {
-    return (struct cgts_ts_packet *) calloc(1, sizeof(struct cgts_ts_packet));
+    struct cgts_ts_packet * tsp = (struct cgts_ts_packet *) calloc(1, sizeof(struct cgts_ts_packet));
+    return tsp;
 }
 
 bool cgts_ts_packet_parse(struct cgts_ts_packet * tsp, uint8_t * buf) {
@@ -29,6 +31,10 @@ bool cgts_ts_packet_parse(struct cgts_ts_packet * tsp, uint8_t * buf) {
     tsp->scrambling_control = (buf[3] >> 4) & 0xc;
     tsp->adaption_field_control = (buf[3] >> 4) & 0x3;
     tsp->continuity_counter = (buf[3] & 0xf);
+
+    tsp->has_adaptation = (tsp->adaption_field_control & 2) >> 1;
+    tsp->has_payload = tsp->adaption_field_control & 1;
+
     return true;
 }
 
@@ -53,9 +59,10 @@ bool cgts_get188(struct cgts_context * ct, uint8_t * buf) {
 }
 
 void cgts_ts_packet_debug(struct cgts_ts_packet * tsp) {
-    fprintf(stdout, "sync_byte:%x, start_flag:%d, pid:%d, cc:%d\n",
+    fprintf(stdout, "sync_byte:%x, start_flag:%d, pid:%d, cc:%d, payload:%d, adap:%d\n",
             tsp->sync_byte, tsp->unit_start_indicator, 
-            tsp->pid, tsp->continuity_counter
+            tsp->pid, tsp->continuity_counter,
+            tsp->has_payload, tsp->has_adaptation
             );
 }
 

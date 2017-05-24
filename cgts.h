@@ -15,6 +15,7 @@ struct cgts_context {
     uint8_t input_type; // 1-file, 2-memory
     FILE * input_fp;
     uint8_t * input_ptr;
+    int8_t cc;
 };
 
 struct cgts_ts_packet {
@@ -24,6 +25,9 @@ struct cgts_ts_packet {
     uint8_t scrambling_control;
     uint8_t adaption_field_control;
     uint8_t continuity_counter;
+
+    uint8_t has_adaptation;
+    uint8_t has_payload;
 };
 
 struct cgts_context * cgts_alloc_with_memory(uint8_t * buf);
