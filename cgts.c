@@ -3,6 +3,7 @@
 struct cgts_context * cgts_alloc(uint8_t * buf) {
     struct cgts_context * context = calloc(1, sizeof(struct cgts_context));
     context->ccounter = -1;
+    context->tsp_counter = 0;
     return context;
 }
 
@@ -21,10 +22,13 @@ void cgts_free(struct cgts_context * context) {
 
 struct cgts_ts_packet * cgts_ts_packet_alloc() {
     struct cgts_ts_packet * tsp = (struct cgts_ts_packet *) calloc(1, sizeof(struct cgts_ts_packet));
+    tsp->pcr = 0;
     return tsp;
 }
 
 bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp, uint8_t * buf) {
+    ct->tsp_counter++;
+
     tsp->sync_byte = buf[0];
     tsp->unit_start_indicator = (buf[1] & 0x40) >> 6;
     tsp->pid = (buf[1] & 0x1f) * 256 + buf[2];
@@ -32,8 +36,12 @@ bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp,
     tsp->adaption_field_control = (buf[3] >> 4) & 0x3;
     tsp->continuity_counter = (buf[3] & 0xf);
 
+    ct->ccounter = tsp->continuity_counter;
+
     tsp->has_adaptation = (tsp->adaption_field_control & 2) >> 1;
     tsp->has_payload = tsp->adaption_field_control & 1;
+
+    const uint8_t *p = buf + 4; /*ts header*/
 
     if (tsp->has_adaptation) {
         uint8_t adaptation_len = buf[4];
@@ -48,8 +56,24 @@ bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp,
         int64_t pcr_high = buf[6] * 256 * 256 * 256 + buf[7] * 256 * 256 + buf[8] * 256 + buf[9];
         pcr_high = (pcr_high << 1) | (buf[10] >> 7);
         int pcr_low = ((buf[10] & 1) << 8) | buf[11];
-        ct->pcr = pcr_high * 300 + pcr_low;
-        fprintf(stdout, "pcr: %lld\n", ct->pcr);
+        tsp->pcr = pcr_high * 300 + pcr_low;
+        //fprintf(stdout, "pcr: %lld\n", tsp->pcr);
+
+        p = p + p[0] /* afc length */ + 1 /* afc header */;
+    }
+
+    if (!(tsp->has_payload)) {
+        return false;
+    }
+    if (p >= buf + CGTS_PACKET_SIZE) {
+        return false;
+    }
+
+    /* TS Packet Header Finished */
+    /* TS Packet Payload Start */
+
+    if (tsp->pid == 0x00) {
+        /* PAT */
     }
 
     return true;
@@ -75,12 +99,21 @@ bool cgts_get188(struct cgts_context * ct, uint8_t * buf) {
     }
 }
 
-void cgts_ts_packet_debug(struct cgts_ts_packet * tsp) {
-    fprintf(stdout, "sync_byte:%x, start_flag:%d, pid:%d, cc:%d, payload:%d, adap:%d\n",
+void cgts_ts_packet_debug(struct cgts_context * ct, struct cgts_ts_packet * tsp) {
+    fprintf(stdout, "%d: sync_byte:%x, start_flag:%d, pid:%d, cc:%d, payload:%d, adap:%d",
+            ct->tsp_counter,
             tsp->sync_byte, tsp->unit_start_indicator, 
             tsp->pid, tsp->continuity_counter,
             tsp->has_payload, tsp->has_adaptation
             );
+
+    if (tsp->pid == 0) {
+        fprintf(stdout, " PAT ");
+    }
+    if (tsp->pcr != 0) {
+        fprintf(stdout, " PCR: %lld ", tsp->pcr);
+    }
+    fprintf(stdout, "\n");
 }
 
 bool cgts_analyze_ts_packet(struct cgts_context * ct, uint8_t * buf) {
@@ -88,7 +121,7 @@ bool cgts_analyze_ts_packet(struct cgts_context * ct, uint8_t * buf) {
 
     struct cgts_ts_packet * tsp = cgts_ts_packet_alloc();
     cgts_ts_packet_parse(ct, tsp, buf);
-    cgts_ts_packet_debug(tsp);
+    cgts_ts_packet_debug(ct, tsp);
     cgts_ts_packet_free(tsp);
     return true;
 }

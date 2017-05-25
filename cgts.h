@@ -11,12 +11,16 @@
 #define CGTS_INPUT_TYPE_FILE 1
 #define CGTS_INPUT_TYPE_MEMORY 2
 
+#define CGTS_PID_PAT 0x00
+#define CGTS_PID_CAT 0x01
+#define CGTS_PID_SDT 0x02
+
 struct cgts_context {
     uint8_t input_type; // 1-file, 2-memory
     FILE * input_fp;
     uint8_t * input_ptr;
+    uint32_t tsp_counter;
     int8_t ccounter;
-    uint64_t pcr;
 };
 
 struct cgts_ts_packet {
@@ -29,6 +33,8 @@ struct cgts_ts_packet {
 
     uint8_t has_adaptation;
     uint8_t has_payload;
+
+    uint64_t pcr;
 };
 
 struct cgts_context * cgts_alloc_with_memory(uint8_t * buf);
