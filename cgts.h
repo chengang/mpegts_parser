@@ -37,6 +37,11 @@ struct cgts_ts_packet {
     uint64_t pcr;
 };
 
+struct cgts_pat {
+    uint8_t table_id;
+
+};
+
 struct cgts_context * cgts_alloc_with_memory(uint8_t * buf);
 struct cgts_context * cgts_alloc_with_file(const char * filename);
 void cgts_free(struct cgts_context * context);

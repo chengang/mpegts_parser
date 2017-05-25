@@ -1,4 +1,19 @@
 #include "cgts.h"
+
+void print_hex(uint8_t * buf, int len) {
+  int i;
+  for(i=0;i<len;i++) {
+    fprintf(stderr, " %02x", buf[i]);
+    if (i % 8 == 7) {
+      fprintf(stderr, " ");
+    }
+    if (i % 16 == 15) {
+      fprintf(stderr, "\n");
+    }
+  }
+  fprintf(stderr, "\n");
+}
+
 // todo..
 struct cgts_context * cgts_alloc(uint8_t * buf) {
     struct cgts_context * context = calloc(1, sizeof(struct cgts_context));
@@ -24,6 +39,17 @@ struct cgts_ts_packet * cgts_ts_packet_alloc() {
     struct cgts_ts_packet * tsp = (struct cgts_ts_packet *) calloc(1, sizeof(struct cgts_ts_packet));
     tsp->pcr = 0;
     return tsp;
+}
+
+bool cgts_pat_parse(struct cgts_context * ct, const uint8_t * buf) {
+    printf("[%x][%x]", buf[0], buf[2]);
+    uint8_t pointer_field = buf[0];
+    const uint8_t * p = buf + pointer_field + 1;
+    uint8_t table_id = p[0];
+    uint16_t section_length = (p[1] & 0x0f << 8) | p[2];
+    printf("table_id:[%d], sec_len:[%d]\n", table_id, section_length);
+    exit(0);
+    return true;
 }
 
 bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp, uint8_t * buf) {
@@ -74,6 +100,7 @@ bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp,
 
     if (tsp->pid == 0x00) {
         /* PAT */
+        cgts_pat_parse(ct, p);
     }
 
     return true;
@@ -100,7 +127,7 @@ bool cgts_get188(struct cgts_context * ct, uint8_t * buf) {
 }
 
 void cgts_ts_packet_debug(struct cgts_context * ct, struct cgts_ts_packet * tsp) {
-    fprintf(stdout, "%d: sync_byte:%x, start_flag:%d, pid:%d, cc:%d, payload:%d, adap:%d",
+    fprintf(stdout, "%d: sync_byte:%x, start_flag:%d, pid:%d, cc:%d, payload:%d, adap:%d, ",
             ct->tsp_counter,
             tsp->sync_byte, tsp->unit_start_indicator, 
             tsp->pid, tsp->continuity_counter,
@@ -118,6 +145,7 @@ void cgts_ts_packet_debug(struct cgts_context * ct, struct cgts_ts_packet * tsp)
 
 bool cgts_analyze_ts_packet(struct cgts_context * ct, uint8_t * buf) {
     //printf("%02x\n", buf[187]);
+	print_hex(buf, 188);
 
     struct cgts_ts_packet * tsp = cgts_ts_packet_alloc();
     cgts_ts_packet_parse(ct, tsp, buf);
