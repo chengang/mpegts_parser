@@ -3,19 +3,19 @@
 void print_hex(uint8_t * buf, int len) {
   int i;
   for(i=0;i<len;i++) {
-    fprintf(stderr, " %02x", buf[i]);
+    fprintf(stdout, " %02x", buf[i]);
     if (i % 8 == 7) {
-      fprintf(stderr, " ");
+      fprintf(stdout, " ");
     }
     if (i % 16 == 15) {
-      fprintf(stderr, "\n");
+      fprintf(stdout, "\n");
     }
   }
-  fprintf(stderr, "\n");
+  fprintf(stdout, "\n");
 }
 
 // todo..
-struct cgts_context * cgts_alloc(uint8_t * buf) {
+struct cgts_context * cgts_alloc_with_memory(uint8_t * buf) {
     struct cgts_context * context = calloc(1, sizeof(struct cgts_context));
     context->ccounter = -1;
     context->tsp_counter = 0;
@@ -142,6 +142,9 @@ bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp,
         /* Transport Stream Desc Table */
         cgts_sdt_parse(ct, p);
     } else {
+        if (tsp->unit_start_indicator == 0) {
+            //append_payload_to_pid(buf);
+        }
         /* NIT or PMT or PES */
         cgts_ts_packet_payload_parse(ct, p);
     }
