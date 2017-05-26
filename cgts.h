@@ -37,9 +37,17 @@ struct cgts_ts_packet {
     uint64_t pcr;
 };
 
+struct cgts_program {
+    uint16_t pid;
+};
+
 struct cgts_pat {
     uint8_t table_id;
-
+    uint16_t stream_id;
+    uint8_t version;
+    uint8_t sec_num;
+    uint8_t last_sec_num;
+    struct cgts_program *prg;
 };
 
 struct cgts_context * cgts_alloc_with_memory(uint8_t * buf);

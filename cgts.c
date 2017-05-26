@@ -41,14 +41,48 @@ struct cgts_ts_packet * cgts_ts_packet_alloc() {
     return tsp;
 }
 
+bool cgts_sdt_parse(struct cgts_context * ct, const uint8_t * buf) {
+    printf("SDT found\n");
+    exit(0);
+    return true;
+}
+
+bool cgts_cat_parse(struct cgts_context * ct, const uint8_t * buf) {
+    printf("CAT found\n");
+    exit(0);
+    return true;
+}
+
 bool cgts_pat_parse(struct cgts_context * ct, const uint8_t * buf) {
-    printf("[%x][%x]", buf[0], buf[2]);
     uint8_t pointer_field = buf[0];
     const uint8_t * p = buf + pointer_field + 1;
     uint8_t table_id = p[0];
-    uint16_t section_length = (p[1] & 0x0f << 8) | p[2];
-    printf("table_id:[%d], sec_len:[%d]\n", table_id, section_length);
-    exit(0);
+    uint16_t section_length = ( (p[1] & 0x0f) << 8) | p[2];
+    uint16_t stream_id = (p[3] << 8) | p[4];
+    uint8_t version = (p[5] >> 1) & 0x1f;
+    uint8_t sec_num = p[6];
+    uint8_t last_sec_num = p[7];
+    //printf("table_id:[%d], sec_len:[%d]\n", table_id, section_length);
+
+    uint16_t i = 0;
+    while(true) {
+        if (5 /* header(8) - bytes before section length(3) */ 
+                + i /* prev id pair */ 
+                + 4 /* this id pair*/ 
+                + 4 /* crc32 */ 
+                >= section_length + 3) {
+            break;
+        }
+        uint16_t program_id = (p[8 /* header */ +i] << 8) | p[9+i]; 
+        uint16_t pid = ((p[8+i+2] << 8) | p[9+i+2]) & 0x1fff; 
+        //printf("progid:[%d], pid:[%d]\n", program_id, pid);
+        i += 4;
+    }
+
+    return true;
+}
+
+bool cgts_ts_packet_payload_parse(struct cgts_context * ct, const uint8_t * buf) {
     return true;
 }
 
@@ -98,9 +132,18 @@ bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp,
     /* TS Packet Header Finished */
     /* TS Packet Payload Start */
 
-    if (tsp->pid == 0x00) {
+    if (tsp->pid == CGTS_PID_PAT) {
         /* PAT */
         cgts_pat_parse(ct, p);
+    } else if (tsp->pid == CGTS_PID_CAT) {
+        /* CAT */
+        cgts_cat_parse(ct, p);
+    } else if (tsp->pid == CGTS_PID_SDT) {
+        /* Transport Stream Desc Table */
+        cgts_sdt_parse(ct, p);
+    } else {
+        /* NIT or PMT or PES */
+        cgts_ts_packet_payload_parse(ct, p);
     }
 
     return true;
