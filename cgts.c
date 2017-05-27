@@ -1,46 +1,5 @@
 #include "cgts.h"
 
-void print_hex(uint8_t * buf, int len) {
-  int i;
-  for(i=0;i<len;i++) {
-    fprintf(stdout, " %02x", buf[i]);
-    if (i % 8 == 7) {
-      fprintf(stdout, " ");
-    }
-    if (i % 16 == 15) {
-      fprintf(stdout, "\n");
-    }
-  }
-  fprintf(stdout, "\n");
-}
-
-// todo..
-struct cgts_context * cgts_alloc_with_memory(uint8_t * buf) {
-    struct cgts_context * context = calloc(1, sizeof(struct cgts_context));
-    context->ccounter = -1;
-    context->tsp_counter = 0;
-    return context;
-}
-
-struct cgts_context * cgts_alloc_with_file(const char * filename) {
-    struct cgts_context * context = calloc(1, sizeof(struct cgts_context));
-    context->input_type = CGTS_INPUT_TYPE_FILE;
-    context->input_fp = fopen(filename, "r");
-    return context;
-}
-
-void cgts_free(struct cgts_context * context) {
-    if (context->input_type == CGTS_INPUT_TYPE_FILE) {
-        fclose(context->input_fp);
-    }
-}
-
-struct cgts_ts_packet * cgts_ts_packet_alloc() {
-    struct cgts_ts_packet * tsp = (struct cgts_ts_packet *) calloc(1, sizeof(struct cgts_ts_packet));
-    tsp->pcr = 0;
-    return tsp;
-}
-
 bool cgts_sdt_parse(struct cgts_context * ct, const uint8_t * buf) {
     printf("SDT found\n");
     exit(0);
@@ -152,10 +111,6 @@ bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp,
     return true;
 }
 
-void cgts_ts_packet_free(struct cgts_ts_packet * tsp) {
-    free(tsp);
-}
-
 bool cgts_get188_from_file(FILE * fp, uint8_t * buf) {
     int read_bytes = fread(buf, 1, CGTS_PACKET_SIZE, fp);
     if (read_bytes == CGTS_PACKET_SIZE) {
@@ -170,23 +125,6 @@ bool cgts_get188(struct cgts_context * ct, uint8_t * buf) {
     } else {
         return false;
     }
-}
-
-void cgts_ts_packet_debug(struct cgts_context * ct, struct cgts_ts_packet * tsp) {
-    fprintf(stdout, "%d: sync_byte:%x, start_flag:%d, pid:%d, cc:%d, payload:%d, adap:%d, ",
-            ct->tsp_counter,
-            tsp->sync_byte, tsp->unit_start_indicator, 
-            tsp->pid, tsp->continuity_counter,
-            tsp->has_payload, tsp->has_adaptation
-            );
-
-    if (tsp->pid == 0) {
-        fprintf(stdout, " PAT ");
-    }
-    if (tsp->pcr != 0) {
-        fprintf(stdout, " PCR: %lld ", tsp->pcr);
-    }
-    fprintf(stdout, "\n");
 }
 
 bool cgts_analyze_ts_packet(struct cgts_context * ct, uint8_t * buf) {
