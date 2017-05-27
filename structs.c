@@ -1,24 +1,58 @@
 #include "structs.h"
 
 /* context */
-// todo..
+
+#define PXX_BUF_LEN_DEFAULT 1024
+struct cgts_pxx_buffer * cgts_pxx_buffer_alloc(uint16_t pid) {
+    struct cgts_pxx_buffer * pxx_buf = calloc(1, sizeof(struct cgts_pxx_buffer));
+    pxx_buf->pid = pid;
+    pxx_buf->buf = calloc(1, PXX_BUF_LEN_DEFAULT);
+    pxx_buf->buf_pos = 0;
+    pxx_buf->buf_cap = PXX_BUF_LEN_DEFAULT;
+    return pxx_buf;
+}
+
+void cgts_pxx_buffer_free(struct cgts_pxx_buffer * pxx_buf) {
+    free(pxx_buf->buf);
+    free(pxx_buf);
+}
+
+bool cgts_pxx_buffer_append(struct cgts_pxx_buffer * pxx_buf, uint8_t * ts_payload, uint32_t ts_payload_len) {
+    while (pxx_buf->buf_pos + ts_payload_len >= pxx_buf->buf_cap) {
+        pxx_buf->buf = realloc(pxx_buf->buf, pxx_buf->buf_cap * 2);
+        if (pxx_buf->buf == NULL) {
+            return false;
+        }
+        pxx_buf->buf_cap = pxx_buf->buf_cap * 2;
+    }
+    memcpy(pxx_buf->buf + pxx_buf->buf_pos, ts_payload, ts_payload_len);
+    pxx_buf->buf_pos +=  ts_payload_len;
+
+    return true;
+}
+
+// todo.. start
 struct cgts_context * cgts_alloc_with_memory(uint8_t * buf) {
     struct cgts_context * context = calloc(1, sizeof(struct cgts_context));
-    context->ccounter = -1;
-    context->tsp_counter = 0;
     return context;
 }
+// todo.. end
 
 struct cgts_context * cgts_alloc_with_file(const char * filename) {
     struct cgts_context * context = calloc(1, sizeof(struct cgts_context));
     context->input_type = CGTS_INPUT_TYPE_FILE;
     context->input_fp = fopen(filename, "r");
+    context->pxx_buf_num = 1;
+    context->pxx_buf[(context->pxx_buf_num - 1)] = cgts_pxx_buffer_alloc(0);
     return context;
 }
 
 void cgts_free(struct cgts_context * context) {
     if (context->input_type == CGTS_INPUT_TYPE_FILE) {
         fclose(context->input_fp);
+    }
+    for(int i=0; i < context->pxx_buf_num; i++) {
+        cgts_pxx_buffer_free(context->pxx_buf[i]);
     }
 }
 

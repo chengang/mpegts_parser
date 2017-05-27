@@ -91,9 +91,26 @@ bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp,
     /* TS Packet Header Finished */
     /* TS Packet Payload Start */
 
+    if (tsp->unit_start_indicator) {
+        cgts_pxx_packet_append(ct, tsp->pid, true, p);
+    } else {
+        cgts_pxx_packet_append(ct, tsp->pid, false, p);
+    }
+
+    return true;
+}
+
+bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_start, const uint8_t * ts_payload) {
+    //if (cgts_pid_is_known() == 0) {
+    //    return true;
+    //}
+    //cgts_append_buffer(ct, pid, ts_payload);
+    return true;
+
+
+#if 0
     if (tsp->pid == CGTS_PID_PAT) {
         /* PAT */
-        cgts_pat_parse(ct, p);
     } else if (tsp->pid == CGTS_PID_CAT) {
         /* CAT */
         cgts_cat_parse(ct, p);
@@ -107,7 +124,17 @@ bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp,
         /* NIT or PMT or PES */
         cgts_ts_packet_payload_parse(ct, p);
     }
+#endif
+}
 
+bool cgts_analyze_ts_packet(struct cgts_context * ct, uint8_t * buf) {
+    //printf("%02x\n", buf[187]);
+	//print_hex(buf, 188);
+
+    struct cgts_ts_packet * tsp = cgts_ts_packet_alloc();
+    cgts_ts_packet_parse(ct, tsp, buf);
+    cgts_ts_packet_debug(ct, tsp);
+    cgts_ts_packet_free(tsp);
     return true;
 }
 
@@ -125,17 +152,6 @@ bool cgts_get188(struct cgts_context * ct, uint8_t * buf) {
     } else {
         return false;
     }
-}
-
-bool cgts_analyze_ts_packet(struct cgts_context * ct, uint8_t * buf) {
-    //printf("%02x\n", buf[187]);
-	print_hex(buf, 188);
-
-    struct cgts_ts_packet * tsp = cgts_ts_packet_alloc();
-    cgts_ts_packet_parse(ct, tsp, buf);
-    cgts_ts_packet_debug(ct, tsp);
-    cgts_ts_packet_free(tsp);
-    return true;
 }
 
 void cgts_parse(struct cgts_context * ct) {

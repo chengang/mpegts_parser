@@ -24,6 +24,19 @@ struct cgts_program {
 };
 
 /* context */
+struct cgts_pxx_buffer {
+    uint16_t pid;
+    uint32_t expect_len;
+    uint8_t * buf;
+    uint32_t buf_pos;
+    uint32_t buf_cap;
+};
+
+struct cgts_pxx_buffer * cgts_pxx_buffer_alloc(uint16_t pid);
+void cgts_pxx_buffer_free(struct cgts_pxx_buffer * pxx_buf);
+bool cgts_pxx_buffer_append(struct cgts_pxx_buffer * pxx_buf, uint8_t * ts_payload, uint32_t ts_payload_len);
+
+#define MAX_PIDS_IN_SIGNLE_MPEGTS   512
 struct cgts_context {
     uint8_t input_type; // 1-file, 2-memory
     FILE * input_fp;
@@ -33,6 +46,9 @@ struct cgts_context {
 
     struct cgts_program * programs;
     uint16_t programs_num;
+
+    struct cgts_pxx_buffer * pxx_buf[MAX_PIDS_IN_SIGNLE_MPEGTS];
+    uint16_t pxx_buf_num;
 };
 
 struct cgts_context * cgts_alloc_with_memory(uint8_t * buf);
