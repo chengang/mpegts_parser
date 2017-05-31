@@ -1,6 +1,9 @@
 #include "structs.h"
 
-/* context */
+
+/**********************************/
+/*************** pxx **************/
+/**********************************/
 
 #define PXX_BUF_LEN_DEFAULT 1024
 struct cgts_pxx_buffer * cgts_pxx_buffer_alloc(uint16_t pid) {
@@ -31,6 +34,10 @@ bool cgts_pxx_buffer_append(struct cgts_pxx_buffer * pxx_buf, uint8_t * ts_paylo
     return true;
 }
 
+/**********************************/
+/************ context *************/
+/**********************************/
+
 // todo.. start
 struct cgts_context * cgts_alloc_with_memory(uint8_t * buf) {
     struct cgts_context * context = calloc(1, sizeof(struct cgts_context));
@@ -56,7 +63,30 @@ void cgts_free(struct cgts_context * context) {
     }
 }
 
-/* ts packet */
+bool cgts_pid_exists(struct cgts_context * ct, uint16_t pid) {
+    for (int i=0;i<ct->pxx_buf_num;i++) {
+        if (pid == ct->pxx_buf[i]->pid) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool cgts_pid_create(struct cgts_context * ct, uint16_t pid) {
+   if (ct->pxx_buf_num >= MAX_PIDS_IN_SIGNLE_MPEGTS) {
+       return false;
+   }
+
+   ct->pxx_buf_num = ct->pxx_buf_num + 1;
+   ct->pxx_buf[(ct->pxx_buf_num - 1)] = cgts_pxx_buffer_alloc(pid);
+
+   return true;
+}
+
+/**********************************/
+/************ ts packet ***********/
+/**********************************/
+
 struct cgts_ts_packet * cgts_ts_packet_alloc() {
     struct cgts_ts_packet * tsp = (struct cgts_ts_packet *) calloc(1, sizeof(struct cgts_ts_packet));
     tsp->pcr = 0;

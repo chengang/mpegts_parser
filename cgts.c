@@ -101,9 +101,18 @@ bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp,
 }
 
 bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_start, const uint8_t * ts_payload) {
-    //if (cgts_pid_is_known() == 0) {
-    //    return true;
-    //}
+    if (cgts_pid_exists(ct, pid) == false) {
+        if (cgts_pid_create(ct, pid) == false) {
+            return false;
+        }
+    }
+    // go on HERE!
+    // go on HERE!
+    // go on HERE!
+    // go on HERE!
+    // go on HERE!
+    // go on HERE!
+    // go on HERE!
     //cgts_append_buffer(ct, pid, ts_payload);
     return true;
 
