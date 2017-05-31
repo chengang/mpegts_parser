@@ -2,35 +2,34 @@
 
 
 /**********************************/
-/*************** pxx **************/
+/*********** pid buffer ***********/
 /**********************************/
 
 #define PXX_BUF_LEN_DEFAULT 1024
-struct cgts_pxx_buffer * cgts_pxx_buffer_alloc(uint16_t pid) {
-    struct cgts_pxx_buffer * pxx_buf = calloc(1, sizeof(struct cgts_pxx_buffer));
-    pxx_buf->pid = pid;
-    pxx_buf->buf = calloc(1, PXX_BUF_LEN_DEFAULT);
-    pxx_buf->buf_pos = 0;
-    pxx_buf->buf_cap = PXX_BUF_LEN_DEFAULT;
-    return pxx_buf;
+struct cgts_pid_buffer * cgts_pid_buffer_alloc(uint16_t pid) {
+    struct cgts_pid_buffer * pid_buf = calloc(1, sizeof(struct cgts_pid_buffer));
+    pid_buf->pid = pid;
+    pid_buf->buf = calloc(1, PXX_BUF_LEN_DEFAULT);
+    pid_buf->buf_pos = 0;
+    pid_buf->buf_cap = PXX_BUF_LEN_DEFAULT;
+    return pid_buf;
 }
 
-void cgts_pxx_buffer_free(struct cgts_pxx_buffer * pxx_buf) {
-    free(pxx_buf->buf);
-    free(pxx_buf);
+void cgts_pid_buffer_free(struct cgts_pid_buffer * pid_buf) {
+    free(pid_buf->buf);
+    free(pid_buf);
 }
 
-bool cgts_pxx_buffer_append(struct cgts_pxx_buffer * pxx_buf, uint8_t * ts_payload, uint32_t ts_payload_len) {
-    while (pxx_buf->buf_pos + ts_payload_len >= pxx_buf->buf_cap) {
-        pxx_buf->buf = realloc(pxx_buf->buf, pxx_buf->buf_cap * 2);
-        if (pxx_buf->buf == NULL) {
+bool cgts_pid_buffer_append(struct cgts_pid_buffer * pid_buf, uint8_t * ts_payload, uint32_t ts_payload_len) {
+    while (pid_buf->buf_pos + ts_payload_len >= pid_buf->buf_cap) {
+        pid_buf->buf = realloc(pid_buf->buf, pid_buf->buf_cap * 2);
+        if (pid_buf->buf == NULL) {
             return false;
         }
-        pxx_buf->buf_cap = pxx_buf->buf_cap * 2;
+        pid_buf->buf_cap = pid_buf->buf_cap * 2;
     }
-    memcpy(pxx_buf->buf + pxx_buf->buf_pos, ts_payload, ts_payload_len);
-    pxx_buf->buf_pos +=  ts_payload_len;
-
+    memcpy(pid_buf->buf + pid_buf->buf_pos, ts_payload, ts_payload_len);
+    pid_buf->buf_pos +=  ts_payload_len;
     return true;
 }
 
@@ -49,8 +48,8 @@ struct cgts_context * cgts_alloc_with_file(const char * filename) {
     struct cgts_context * context = calloc(1, sizeof(struct cgts_context));
     context->input_type = CGTS_INPUT_TYPE_FILE;
     context->input_fp = fopen(filename, "r");
-    context->pxx_buf_num = 1;
-    context->pxx_buf[(context->pxx_buf_num - 1)] = cgts_pxx_buffer_alloc(0);
+    context->pid_buf_num = 1;
+    context->pid_buf[(context->pid_buf_num - 1)] = cgts_pid_buffer_alloc(0);
     return context;
 }
 
@@ -58,14 +57,14 @@ void cgts_free(struct cgts_context * context) {
     if (context->input_type == CGTS_INPUT_TYPE_FILE) {
         fclose(context->input_fp);
     }
-    for(int i=0; i < context->pxx_buf_num; i++) {
-        cgts_pxx_buffer_free(context->pxx_buf[i]);
+    for(int i=0; i < context->pid_buf_num; i++) {
+        cgts_pid_buffer_free(context->pid_buf[i]);
     }
 }
 
 bool cgts_pid_exists(struct cgts_context * ct, uint16_t pid) {
-    for (int i=0;i<ct->pxx_buf_num;i++) {
-        if (pid == ct->pxx_buf[i]->pid) {
+    for (int i=0;i<ct->pid_buf_num;i++) {
+        if (pid == ct->pid_buf[i]->pid) {
             return true;
         }
     }
@@ -73,12 +72,12 @@ bool cgts_pid_exists(struct cgts_context * ct, uint16_t pid) {
 }
 
 bool cgts_pid_create(struct cgts_context * ct, uint16_t pid) {
-   if (ct->pxx_buf_num >= MAX_PIDS_IN_SIGNLE_MPEGTS) {
+   if (ct->pid_buf_num >= MAX_PIDS_IN_SIGNLE_MPEGTS) {
        return false;
    }
 
-   ct->pxx_buf_num = ct->pxx_buf_num + 1;
-   ct->pxx_buf[(ct->pxx_buf_num - 1)] = cgts_pxx_buffer_alloc(pid);
+   ct->pid_buf_num = ct->pid_buf_num + 1;
+   ct->pid_buf[(ct->pid_buf_num - 1)] = cgts_pid_buffer_alloc(pid);
 
    return true;
 }
