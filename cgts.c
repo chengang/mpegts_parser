@@ -60,7 +60,9 @@ bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp,
     tsp->has_adaptation = (tsp->adaption_field_control & 2) >> 1;
     tsp->has_payload = tsp->adaption_field_control & 1;
 
-    const uint8_t *p = buf + 4; /*ts header*/
+    int32_t ts_payload_len = CGTS_PACKET_SIZE;
+    const uint8_t *ts_payload = buf + 4; /*ts header*/
+    ts_payload_len = ts_payload_len - 4;
 
     if (tsp->has_adaptation) {
         uint8_t adaptation_len = buf[4];
@@ -78,13 +80,15 @@ bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp,
         tsp->pcr = pcr_high * 300 + pcr_low;
         //fprintf(stdout, "pcr: %lld\n", tsp->pcr);
 
-        p = p + p[0] /* afc length */ + 1 /* afc header */;
+        ts_payload = ts_payload + adaptation_len /* afc length */ + 1 /* afc header */;
+        ts_payload_len = ts_payload_len - adaptation_len;
     }
 
     if (!(tsp->has_payload)) {
         return false;
     }
-    if (p >= buf + CGTS_PACKET_SIZE) {
+    if (ts_payload >= buf + CGTS_PACKET_SIZE 
+            || ts_payload_len <= 0) {
         return false;
     }
 
@@ -92,20 +96,32 @@ bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp,
     /* TS Packet Payload Start */
 
     if (tsp->unit_start_indicator) {
-        cgts_pxx_packet_append(ct, tsp->pid, true, p);
+        cgts_pxx_packet_append(ct, tsp->pid, true, ts_payload, ts_payload_len);
     } else {
-        cgts_pxx_packet_append(ct, tsp->pid, false, p);
+        cgts_pxx_packet_append(ct, tsp->pid, false, ts_payload, ts_payload_len);
     }
 
     return true;
 }
 
-bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_start, const uint8_t * ts_payload) {
+bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_start, const uint8_t * ts_payload, uint32_t ts_payload_len) {
     if (cgts_pid_exists(ct, pid) == false) {
         if (cgts_pid_create(ct, pid) == false) {
             return false;
         }
     }
+
+    int32_t pid_buffer_index = cgts_pid_buffer_index(ct, pid);
+    if (pid_buffer_index == -1) {
+        return false;
+    }
+
+    if (cgts_pid_buffer_append(ct->pid_buf[pid_buffer_index], ts_payload, ts_payload_len) == false) {
+        return false;
+    }
+
+    //todo: is buffer full ??
+
     // go on HERE!
     // go on HERE!
     // go on HERE!

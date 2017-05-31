@@ -34,7 +34,7 @@ struct cgts_pid_buffer {
 
 struct cgts_pid_buffer * cgts_pid_buffer_alloc(uint16_t pid);
 void cgts_pid_buffer_free(struct cgts_pid_buffer * pid_buf);
-bool cgts_pid_buffer_append(struct cgts_pid_buffer * pid_buf, uint8_t * ts_payload, uint32_t ts_payload_len);
+bool cgts_pid_buffer_append(struct cgts_pid_buffer * pid_buf, const uint8_t * ts_payload, uint32_t ts_payload_len);
 
 /* context */
 #define MAX_PIDS_IN_SIGNLE_MPEGTS   512
@@ -56,6 +56,7 @@ struct cgts_context * cgts_alloc_with_memory(uint8_t * buf);
 struct cgts_context * cgts_alloc_with_file(const char * filename);
 void cgts_free(struct cgts_context * context);
 bool cgts_pid_exists(struct cgts_context * ct, uint16_t pid);
+int32_t cgts_pid_buffer_index(struct cgts_context * ct, uint16_t pid);
 bool cgts_pid_create(struct cgts_context * ct, uint16_t pid);
 
 /* ts packet */

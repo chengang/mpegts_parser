@@ -10,7 +10,7 @@
 #include "structs.h"
 #include "util.h"
 
-bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_start, const uint8_t * ts_payload);
+bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_start, const uint8_t * ts_payload, uint32_t ts_payload_len);
 
 bool cgts_sdt_parse(struct cgts_context * ct, const uint8_t * buf);
 bool cgts_cat_parse(struct cgts_context * ct, const uint8_t * buf);

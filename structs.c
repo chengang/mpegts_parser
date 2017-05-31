@@ -20,7 +20,7 @@ void cgts_pid_buffer_free(struct cgts_pid_buffer * pid_buf) {
     free(pid_buf);
 }
 
-bool cgts_pid_buffer_append(struct cgts_pid_buffer * pid_buf, uint8_t * ts_payload, uint32_t ts_payload_len) {
+bool cgts_pid_buffer_append(struct cgts_pid_buffer * pid_buf, const uint8_t * ts_payload, uint32_t ts_payload_len) {
     while (pid_buf->buf_pos + ts_payload_len >= pid_buf->buf_cap) {
         pid_buf->buf = realloc(pid_buf->buf, pid_buf->buf_cap * 2);
         if (pid_buf->buf == NULL) {
@@ -69,6 +69,15 @@ bool cgts_pid_exists(struct cgts_context * ct, uint16_t pid) {
         }
     }
     return false;
+}
+
+int32_t cgts_pid_buffer_index(struct cgts_context * ct, uint16_t pid) {
+    for (int i=0;i<ct->pid_buf_num;i++) {
+        if (pid == ct->pid_buf[i]->pid) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 bool cgts_pid_create(struct cgts_context * ct, uint16_t pid) {
