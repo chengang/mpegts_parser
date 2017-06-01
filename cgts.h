@@ -14,7 +14,7 @@ bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_star
 
 bool cgts_sdt_parse(struct cgts_context * ct, const uint8_t * buf);
 bool cgts_cat_parse(struct cgts_context * ct, const uint8_t * buf);
-bool cgts_pat_parse(struct cgts_context * ct, const uint8_t * buf);
+bool cgts_pat_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf);
 bool cgts_ts_packet_payload_parse(struct cgts_context * ct, const uint8_t * buf);
 bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp, uint8_t * buf);
 bool cgts_analyze_ts_packet(struct cgts_context * ct, uint8_t * buf);

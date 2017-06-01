@@ -12,15 +12,15 @@ bool cgts_cat_parse(struct cgts_context * ct, const uint8_t * buf) {
     return true;
 }
 
-bool cgts_pat_parse(struct cgts_context * ct, const uint8_t * buf) {
-    uint8_t pointer_field = buf[0];
-    const uint8_t * p = buf + pointer_field + 1;
-    uint8_t table_id = p[0];
-    uint16_t section_length = ( (p[1] & 0x0f) << 8) | p[2];
-    uint16_t stream_id = (p[3] << 8) | p[4];
-    uint8_t version = (p[5] >> 1) & 0x1f;
-    uint8_t sec_num = p[6];
-    uint8_t last_sec_num = p[7];
+bool cgts_pat_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) {
+    if (pid_buf->pid != 0) {
+        return false;
+    }
+    uint8_t * p = pid_buf->buf;
+    uint16_t stream_id = (p[0] << 8) | p[1];
+    uint8_t version = (p[2] >> 1) & 0x1f;
+    uint8_t sec_num = p[3];
+    uint8_t last_sec_num = p[4];
     //printf("table_id:[%d], sec_len:[%d]\n", table_id, section_length);
 
     uint16_t i = 0;
@@ -29,12 +29,16 @@ bool cgts_pat_parse(struct cgts_context * ct, const uint8_t * buf) {
                 + i /* prev id pair */ 
                 + 4 /* this id pair*/ 
                 + 4 /* crc32 */ 
-                >= section_length + 3) {
+                >= pid_buf->expect_len + 3) {
             break;
         }
-        uint16_t program_id = (p[8 /* header */ +i] << 8) | p[9+i]; 
-        uint16_t pid = ((p[8+i+2] << 8) | p[9+i+2]) & 0x1fff; 
-        //printf("progid:[%d], pid:[%d]\n", program_id, pid);
+        uint16_t program_id = 
+            (p[5 /* header */ +i] << 8)             /* first byte */ 
+            | p[6+i]                                /* second byte */ ; 
+        uint16_t pid = 
+            ((p[5+i+2] << 8)                        /* third byte */ 
+             | p[6+i+2])                            /* fourth byte */ & 0x1fff; 
+        printf("progid:[%d], pid:[%d]\n", program_id, pid);
         i += 4;
     }
 
@@ -156,7 +160,14 @@ bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_star
     }
 
     // is packet complete ?
-    if (cgts_pid_buffer_complete(ct->pid_buf[pid_buffer_index])) {
+    if (cgts_pid_buffer_complete(ct->pid_buf[pid_buffer_index]) == false) {
+        return true;
+    }
+
+    switch (pid_type) {
+        case CGTS_PID_TYPE_PAT:
+            cgts_pat_parse(ct, ct->pid_buf[pid_buffer_index]);
+            break;
     }
 
     // go on HERE!
