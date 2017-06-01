@@ -104,6 +104,22 @@ bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp,
     return true;
 }
 
+bool cgts_pid_buffer_append_pes_header(struct cgts_pid_buffer * pid_buf, const uint8_t * ts_payload, uint32_t ts_payload_len) {
+    pid_buf->expect_len = 999999;
+    return cgts_pid_buffer_append(pid_buf, ts_payload, ts_payload_len);
+}
+
+bool cgts_pid_buffer_append_psi_header(struct cgts_pid_buffer * pid_buf, const uint8_t * ts_payload, uint32_t ts_payload_len) {
+    uint8_t pointer_field = ts_payload[0];
+    const uint8_t * p = ts_payload + pointer_field + 1;
+    pid_buf->table_id = p[0];
+    pid_buf->expect_len = ( (p[1] & 0x0f) << 8) | p[2];
+    return cgts_pid_buffer_append(
+            pid_buf
+            , p + 3 /* skip table_id and section_length */
+            , ts_payload_len - 1 /* pointer_field length */ - pointer_field - 3);
+}
+
 bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_start, const uint8_t * ts_payload, uint32_t ts_payload_len) {
     if (cgts_pid_exists(ct, pid) == false) {
         if (cgts_pid_create(ct, pid) == false) {
@@ -111,16 +127,37 @@ bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_star
         }
     }
 
+
+    //if (cgts_pid_buffer_append(ct->pid_buf[pid_buffer_index], ts_payload, ts_payload_len) == false) {
+    //    return false;
+    //}
+
+    int16_t pid_type = cgts_pid_type(ct, pid);
+    if (pid_type == CGTS_PID_TYPE_UNKNOWN) {
+        return false;
+    }
+
     int32_t pid_buffer_index = cgts_pid_buffer_index(ct, pid);
     if (pid_buffer_index == -1) {
         return false;
     }
 
-    if (cgts_pid_buffer_append(ct->pid_buf[pid_buffer_index], ts_payload, ts_payload_len) == false) {
-        return false;
+    if (is_start == true) {
+        cgts_pid_buffer_reset(ct->pid_buf[pid_buffer_index]);
+        if (pid_type == CGTS_PID_TYPE_PAT
+                || pid_type == CGTS_PID_TYPE_PMT
+                || pid_type == CGTS_PID_TYPE_PSI ) {
+            cgts_pid_buffer_append_psi_header(ct->pid_buf[pid_buffer_index], ts_payload, ts_payload_len);
+        } else {
+            cgts_pid_buffer_append_pes_header(ct->pid_buf[pid_buffer_index], ts_payload, ts_payload_len);
+        }
+    } else {
+        cgts_pid_buffer_append(ct->pid_buf[pid_buffer_index], ts_payload, ts_payload_len);
     }
 
-    //todo: is buffer full ??
+    // is packet complete ?
+    if (cgts_pid_buffer_complete(ct->pid_buf[pid_buffer_index])) {
+    }
 
     // go on HERE!
     // go on HERE!
@@ -129,7 +166,6 @@ bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_star
     // go on HERE!
     // go on HERE!
     // go on HERE!
-    //cgts_append_buffer(ct, pid, ts_payload);
     return true;
 
 

@@ -33,6 +33,7 @@ bool cgts_program_pid_add(struct cgts_program * program, uint16_t pid) {
 struct cgts_pid_buffer * cgts_pid_buffer_alloc(uint16_t pid) {
     struct cgts_pid_buffer * pid_buf = calloc(1, sizeof(struct cgts_pid_buffer));
     pid_buf->pid = pid;
+    pid_buf->expect_len = 0;
     pid_buf->buf = calloc(1, PXX_BUF_LEN_DEFAULT);
     pid_buf->buf_pos = 0;
     pid_buf->buf_cap = PXX_BUF_LEN_DEFAULT;
@@ -55,6 +56,20 @@ bool cgts_pid_buffer_append(struct cgts_pid_buffer * pid_buf, const uint8_t * ts
     memcpy(pid_buf->buf + pid_buf->buf_pos, ts_payload, ts_payload_len);
     pid_buf->buf_pos +=  ts_payload_len;
     return true;
+}
+
+void cgts_pid_buffer_reset(struct cgts_pid_buffer * pid_buf) {
+    memset(pid_buf->buf, 0, pid_buf->buf_cap);
+    pid_buf->expect_len = 0;
+    pid_buf->buf_pos = 0;
+}
+
+bool cgts_pid_buffer_complete(struct cgts_pid_buffer * pid_buf) {
+    if (pid_buf->buf_pos == pid_buf->expect_len) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 /**********************************/
@@ -117,8 +132,30 @@ bool cgts_pid_create(struct cgts_context * ct, uint16_t pid) {
 }
 
 int16_t cgts_pid_type(struct cgts_context * ct, uint16_t pid) {
+    if (pid == CGTS_PID_PAT) {
+        return CGTS_PID_TYPE_PAT;
+    }
 
-    return -1;
+    if (pid == CGTS_PID_CAT) {
+        return CGTS_PID_TYPE_PSI;
+    }
+
+    if (pid == CGTS_PID_SDT) {
+        return CGTS_PID_TYPE_PSI;
+    }
+
+    for (int i=0;i<ct->programs_num;i++) {
+        struct cgts_program * prog = ct->programs[i];
+        if (pid == prog->pmt_pid) {
+            return CGTS_PID_TYPE_PMT;
+        }
+        for (int j=0;j<prog->pids_num;j++) {
+            if (pid == prog->pids[j]) {
+                return CGTS_PID_TYPE_PES;
+            }
+        }
+    }
+    return CGTS_PID_TYPE_UNKNOWN;
 }
 
 /**********************************/

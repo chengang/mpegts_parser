@@ -37,6 +37,7 @@ bool cgts_program_pid_add(struct cgts_program * program, uint16_t pid);
 /* pid buffer */
 struct cgts_pid_buffer {
     uint16_t pid;
+    uint8_t table_id;
     uint32_t expect_len;
     uint8_t * buf;
     uint32_t buf_pos;
@@ -46,6 +47,8 @@ struct cgts_pid_buffer {
 struct cgts_pid_buffer * cgts_pid_buffer_alloc(uint16_t pid);
 void cgts_pid_buffer_free(struct cgts_pid_buffer * pid_buf);
 bool cgts_pid_buffer_append(struct cgts_pid_buffer * pid_buf, const uint8_t * ts_payload, uint32_t ts_payload_len);
+void cgts_pid_buffer_reset(struct cgts_pid_buffer * pid_buf);
+bool cgts_pid_buffer_complete(struct cgts_pid_buffer * pid_buf);
 
 /* context */
 #define MAX_PIDS_IN_SIGNLE_MPEGTS   512
