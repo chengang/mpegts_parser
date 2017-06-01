@@ -1,5 +1,29 @@
 #include "structs.h"
 
+/**********************************/
+/************ program *************/
+/**********************************/
+
+struct cgts_program * cgts_program_alloc(uint16_t program_id, uint16_t pmt_pid) {
+    struct cgts_program * program = calloc(1, sizeof(struct cgts_program));
+    program->program_id = program_id;
+    program->pmt_pid = pmt_pid;
+    program->pids_num = 0;
+    return program;
+}
+
+void cgts_program_free(struct cgts_program * program) {
+    free(program);
+}
+
+bool cgts_program_pid_add(struct cgts_program * program, uint16_t pid) {
+    if (program->pids_num >= MAX_PIDS_PER_PROGRAM) {
+        return false;
+    }
+    program->pids[program->pids_num] = pid;
+    program->pids_num = program->pids_num + 1;
+    return true;
+}
 
 /**********************************/
 /*********** pid buffer ***********/
@@ -48,6 +72,7 @@ struct cgts_context * cgts_alloc_with_file(const char * filename) {
     struct cgts_context * context = calloc(1, sizeof(struct cgts_context));
     context->input_type = CGTS_INPUT_TYPE_FILE;
     context->input_fp = fopen(filename, "r");
+    context->programs_num = 0;
     context->pid_buf_num = 1;
     context->pid_buf[(context->pid_buf_num - 1)] = cgts_pid_buffer_alloc(0);
     return context;
@@ -89,6 +114,11 @@ bool cgts_pid_create(struct cgts_context * ct, uint16_t pid) {
    ct->pid_buf[(ct->pid_buf_num - 1)] = cgts_pid_buffer_alloc(pid);
 
    return true;
+}
+
+int16_t cgts_pid_type(struct cgts_context * ct, uint16_t pid) {
+
+    return -1;
 }
 
 /**********************************/
