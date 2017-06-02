@@ -102,6 +102,43 @@ void cgts_free(struct cgts_context * context) {
     }
 }
 
+//
+// Program Functions
+//
+
+bool cgts_programs_exists(struct cgts_context * ct, uint16_t prog_id) {
+    for (int i=0;i<ct->programs_num;i++) {
+        if (prog_id == ct->programs[i]->program_id) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int32_t cgts_programs_index(struct cgts_context * ct, uint16_t prog_id) {
+    for (int i=0;i<ct->programs_num;i++) {
+        if (prog_id == ct->programs[i]->program_id) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+bool cgts_program_create(struct cgts_context * ct, uint16_t prog_id, uint16_t pmt_pid) {
+    if (ct->programs_num >= MAX_PROGRAMS_IN_SIGNLE_MPEGTS) {
+        return false;
+    }
+
+    ct->programs[ct->programs_num] = cgts_program_alloc(prog_id, pmt_pid);
+    ct->programs_num = ct->programs_num + 1;
+
+    return true;
+}
+
+//
+// Pid-buffer Functions
+//
+
 bool cgts_pid_exists(struct cgts_context * ct, uint16_t pid) {
     for (int i=0;i<ct->pid_buf_num;i++) {
         if (pid == ct->pid_buf[i]->pid) {
@@ -125,8 +162,8 @@ bool cgts_pid_create(struct cgts_context * ct, uint16_t pid) {
        return false;
    }
 
+   ct->pid_buf[ct->pid_buf_num] = cgts_pid_buffer_alloc(pid);
    ct->pid_buf_num = ct->pid_buf_num + 1;
-   ct->pid_buf[(ct->pid_buf_num - 1)] = cgts_pid_buffer_alloc(pid);
 
    return true;
 }

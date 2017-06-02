@@ -70,6 +70,11 @@ struct cgts_context {
 struct cgts_context * cgts_alloc_with_memory(uint8_t * buf);
 struct cgts_context * cgts_alloc_with_file(const char * filename);
 void cgts_free(struct cgts_context * context);
+
+bool cgts_programs_exists(struct cgts_context * ct, uint16_t prog_id);
+int32_t cgts_programs_index(struct cgts_context * ct, uint16_t prog_id);
+bool cgts_program_create(struct cgts_context * ct, uint16_t prog_id, uint16_t pmt_pid);
+
 bool cgts_pid_exists(struct cgts_context * ct, uint16_t pid);
 int32_t cgts_pid_buffer_index(struct cgts_context * ct, uint16_t pid);
 bool cgts_pid_create(struct cgts_context * ct, uint16_t pid);

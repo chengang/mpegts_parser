@@ -40,6 +40,9 @@ bool cgts_pat_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
              | p[6+i+2])                            /* fourth byte */ & 0x1fff; 
         printf("progid:[%d], pid:[%d]\n", program_id, pid);
         i += 4;
+
+        // fill PMT`s pid into context
+
     }
 
     return true;
