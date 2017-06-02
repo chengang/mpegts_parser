@@ -15,12 +15,6 @@
 #define CGTS_PID_CAT 0x01
 #define CGTS_PID_SDT 0x02
 
-#define CGTS_PID_TYPE_PAT       0x10
-#define CGTS_PID_TYPE_PMT       0x11
-#define CGTS_PID_TYPE_PSI       0x12
-#define CGTS_PID_TYPE_PES       0x13
-#define CGTS_PID_TYPE_UNKNOWN   0x19
-
 /* program */
 #define MAX_PIDS_PER_PROGRAM 64
 struct cgts_program {
@@ -79,6 +73,11 @@ bool cgts_programs_exists(struct cgts_context * ct, uint16_t prog_id);
 int32_t cgts_programs_index(struct cgts_context * ct, uint16_t prog_id);
 bool cgts_program_create(struct cgts_context * ct, uint16_t prog_id, uint16_t pmt_pid);
 
+#define CGTS_PID_TYPE_PAT       0x10
+#define CGTS_PID_TYPE_PMT       0x11
+#define CGTS_PID_TYPE_PSI       0x12
+#define CGTS_PID_TYPE_PES       0x13
+#define CGTS_PID_TYPE_UNKNOWN   0x19
 bool cgts_pid_exists(struct cgts_context * ct, uint16_t pid);
 int32_t cgts_pid_buffer_index(struct cgts_context * ct, uint16_t pid);
 bool cgts_pid_create(struct cgts_context * ct, uint16_t pid);

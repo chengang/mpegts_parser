@@ -1961,6 +1961,10 @@ static void pmt_cb(MpegTSFilter *filter, const uint8_t *section, int section_len
     if (program_info_length < 0)
         return;
     program_info_length &= 0xfff;
+        
+    // chengang add
+    fprintf(stderr, "pcr pid:[%d], pinfo_length:[%d]\n", pcr_pid, program_info_length);
+
     while (program_info_length >= 2) {
         uint8_t tag, len;
         tag = get8(&p, p_end);

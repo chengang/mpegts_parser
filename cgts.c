@@ -6,9 +6,34 @@ bool cgts_sdt_parse(struct cgts_context * ct, const uint8_t * buf) {
     return true;
 }
 
-bool cgts_cat_parse(struct cgts_context * ct, const uint8_t * buf) {
-    printf("CAT found\n");
-    exit(0);
+bool cgts_pmt_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) {
+    printf("PMT found\n");
+    uint8_t * p = pid_buf->buf;
+    uint16_t program_id = (p[0] << 8) | p[1];
+    uint8_t version = (p[2] >> 1) & 0x1f;
+    uint8_t sec_num = p[3];
+    uint8_t last_sec_num = p[4];
+    printf("program_id:[%d], version: [%d], sec_num: [%d], last_sec_num:[%d]\n", program_id, version, sec_num, last_sec_num);
+
+    int16_t pcr_pid = ((p[5] << 8) | p[6] ) & 0x1fff;
+    int16_t program_info_length = ((p[7] << 8) | p[8] ) & 0x0fff;
+    printf("pcr_pid:[%d], program_info_length: [%d]\n", pcr_pid, program_info_length);
+    //exit(0);
+
+    int16_t ptr_moved = 7 + program_info_length;
+    if (ptr_moved >= pid_buf->buf_pos) {
+        return false;
+    }
+    p = p + 7 + program_info_length;
+
+    // go on HERE!
+    // go on HERE!
+    // go on HERE!
+    // go on HERE!
+    // go on HERE!
+    // go on HERE!
+    // go on HERE!
+
     return true;
 }
 
@@ -175,15 +200,11 @@ bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_star
         case CGTS_PID_TYPE_PAT:
             cgts_pat_parse(ct, ct->pid_buf[pid_buffer_index]);
             break;
+        case CGTS_PID_TYPE_PMT:
+            cgts_pmt_parse(ct, ct->pid_buf[pid_buffer_index]);
+            break;
     }
 
-    // go on HERE!
-    // go on HERE!
-    // go on HERE!
-    // go on HERE!
-    // go on HERE!
-    // go on HERE!
-    // go on HERE!
     return true;
 
 
