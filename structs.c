@@ -29,7 +29,6 @@ bool cgts_program_pid_add(struct cgts_program * program, uint16_t pid) {
 /*********** pid buffer ***********/
 /**********************************/
 
-#define PXX_BUF_LEN_DEFAULT 1024
 struct cgts_pid_buffer * cgts_pid_buffer_alloc(uint16_t pid) {
     struct cgts_pid_buffer * pid_buf = calloc(1, sizeof(struct cgts_pid_buffer));
     pid_buf->pid = pid;
@@ -100,6 +99,38 @@ void cgts_free(struct cgts_context * context) {
     for(int i=0; i < context->pid_buf_num; i++) {
         cgts_pid_buffer_free(context->pid_buf[i]);
     }
+}
+
+void cgts_context_debug(struct cgts_context * ct) {
+    fprintf(stdout, "============= mpegts information =============\n");
+    if (ct->input_type == CGTS_CONTEXT_INPUT_TYPE_FILE) {
+        fprintf(stdout, "| input type: file\n");
+    } else {
+        fprintf(stdout, "| input type: memory\n");
+    }
+    fprintf(stdout, "| ts packet conut: %d\n", ct->tsp_counter);
+    fprintf(stdout, "|\n");
+
+    fprintf(stdout, "|  ---------- program information ----------   \n");
+    for (int i=0;i<ct->programs_num;i++) {
+        fprintf(stdout, "|  | program id: %d, pmt id: %d\n", ct->programs[i]->program_id, ct->programs[i]->pmt_pid);
+        fprintf(stdout, "|  |     pids:");
+        for (int j=0;j<ct->programs[i]->pids_num;j++) {
+            fprintf(stdout, " %d", ct->programs[i]->pids[j]);
+        }
+        fprintf(stdout, "\n");
+    }
+    fprintf(stdout, "|  -----------------------------------------   \n");
+    fprintf(stdout, "|\n");
+
+    fprintf(stdout, "|  ------------ pid information ------------   \n");
+    for (int i=0;i<ct->pid_buf_num;i++) {
+        fprintf(stdout, "|  | pid: %d, table id: %d, capacity: %d\n", ct->pid_buf[i]->pid, ct->pid_buf[i]->table_id, ct->pid_buf[i]->buf_cap);
+    }
+    fprintf(stdout, "|  -----------------------------------------   \n");
+    fprintf(stdout, "|\n");
+
+    fprintf(stdout, "===============================================\n");
 }
 
 //

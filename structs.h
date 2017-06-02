@@ -35,6 +35,7 @@ void cgts_program_free(struct cgts_program * program);
 bool cgts_program_pid_add(struct cgts_program * program, uint16_t pid);
 
 /* pid buffer */
+#define PXX_BUF_LEN_DEFAULT 1024
 struct cgts_pid_buffer {
     uint16_t pid;
     uint8_t table_id;
@@ -51,8 +52,10 @@ void cgts_pid_buffer_reset(struct cgts_pid_buffer * pid_buf);
 bool cgts_pid_buffer_complete(struct cgts_pid_buffer * pid_buf);
 
 /* context */
-#define MAX_PIDS_IN_SIGNLE_MPEGTS   512
+#define MAX_PIDS_IN_SIGNLE_MPEGTS       512
 #define MAX_PROGRAMS_IN_SIGNLE_MPEGTS   512
+#define CGTS_CONTEXT_INPUT_TYPE_FILE    1
+#define CGTS_CONTEXT_INPUT_TYPE_MEMORY  2
 struct cgts_context {
     uint8_t input_type; // 1-file, 2-memory
     FILE * input_fp;
@@ -70,6 +73,7 @@ struct cgts_context {
 struct cgts_context * cgts_alloc_with_memory(uint8_t * buf);
 struct cgts_context * cgts_alloc_with_file(const char * filename);
 void cgts_free(struct cgts_context * context);
+void cgts_context_debug(struct cgts_context * ct);
 
 bool cgts_programs_exists(struct cgts_context * ct, uint16_t prog_id);
 int32_t cgts_programs_index(struct cgts_context * ct, uint16_t prog_id);

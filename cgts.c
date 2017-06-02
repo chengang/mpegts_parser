@@ -35,14 +35,18 @@ bool cgts_pat_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
         uint16_t program_id = 
             (p[5 /* header */ +i] << 8)             /* first byte */ 
             | p[6+i]                                /* second byte */ ; 
-        uint16_t pid = 
+        uint16_t pmt_pid = 
             ((p[5+i+2] << 8)                        /* third byte */ 
              | p[6+i+2])                            /* fourth byte */ & 0x1fff; 
-        printf("progid:[%d], pid:[%d]\n", program_id, pid);
+        printf("progid:[%d], pid:[%d]\n", program_id, pmt_pid);
         i += 4;
 
         // fill PMT`s pid into context
-
+        if (cgts_programs_exists(ct, program_id) == false) {
+            cgts_program_create(ct, program_id, pmt_pid);
+        } else {
+            // todo: delete program_id then cgts_program_create
+        }
     }
 
     return true;
@@ -237,4 +241,5 @@ void cgts_parse(struct cgts_context * ct) {
         }
         cgts_analyze_ts_packet(ct, ts_packet_buf);
     }
+    cgts_context_debug(ct);
 }
