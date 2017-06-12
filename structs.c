@@ -28,11 +28,12 @@ bool cgts_program_pid_exist(struct cgts_program * program, uint16_t pid) {
     return false;
 }
 
-bool cgts_program_pid_add(struct cgts_program * program, uint16_t pid) {
+bool cgts_program_pid_add(struct cgts_program * program, uint16_t pid, uint16_t stream_type) {
     if (program->pids_num >= MAX_PIDS_PER_PROGRAM) {
         return false;
     }
     program->pids[program->pids_num] = pid;
+    program->pids_stream_type[program->pids_num] = stream_type;
     program->pids_num = program->pids_num + 1;
     return true;
 }
@@ -142,7 +143,7 @@ void cgts_context_debug(struct cgts_context * ct) {
         fprintf(stdout, "|  | program id: %d, pmt id: %d\n", ct->programs[i]->program_id, ct->programs[i]->pmt_pid);
         fprintf(stdout, "|  |     pids:");
         for (int j=0;j<ct->programs[i]->pids_num;j++) {
-            fprintf(stdout, " %d", ct->programs[i]->pids[j]);
+            fprintf(stdout, " %d[0x%02x]", ct->programs[i]->pids[j], ct->programs[i]->pids_stream_type[j]);
         }
         fprintf(stdout, "\n");
     }

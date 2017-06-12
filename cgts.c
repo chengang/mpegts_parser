@@ -64,7 +64,7 @@ bool cgts_pmt_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
 
         int32_t program_index = cgts_programs_index(ct, program_id);
         if (cgts_program_pid_exist(ct->programs[program_index], pid) == false) {
-            cgts_program_pid_add(ct->programs[program_index], pid);
+            cgts_program_pid_add(ct->programs[program_index], pid, stream_type);
         }
 
         remain_buf = remain_buf + read_bytes + es_info_length;

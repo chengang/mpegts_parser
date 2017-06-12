@@ -29,7 +29,7 @@ struct cgts_program {
 struct cgts_program * cgts_program_alloc(uint16_t program_id, uint16_t pmt_pid);
 void cgts_program_free(struct cgts_program * program);
 bool cgts_program_pid_exist(struct cgts_program * program, uint16_t pid);
-bool cgts_program_pid_add(struct cgts_program * program, uint16_t pid);
+bool cgts_program_pid_add(struct cgts_program * program, uint16_t pid, uint16_t stream_type);
 
 /* pid buffer */
 #define PXX_BUF_LEN_DEFAULT 1024
