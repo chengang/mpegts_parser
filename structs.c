@@ -128,7 +128,7 @@ void cgts_free(struct cgts_context * context) {
 }
 
 void cgts_context_debug(struct cgts_context * ct) {
-    fprintf(stdout, "============= mpegts information =============\n");
+    fprintf(stdout, "============== mpegts information =============\n");
     if (ct->input_type == CGTS_CONTEXT_INPUT_TYPE_FILE) {
         fprintf(stdout, "| input type: file\n");
     } else {

@@ -29,14 +29,14 @@ bool cgts_pmt_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
     uint8_t * remain_buf = p + 9 + program_info_length; /* skip program info length */
     int32_t remain_buf_len = pid_buf->buf_pos - 9 /* bytes before pid map in pmt */ - program_info_length;
     while(remain_buf_len >= 5 /* min pid desc length is 40 bit = 5 byte */ ) {
-        /**************************/
-        /* stream type  -- 8  bit */
-        /* reserved     -- 3  bit */
-        /* pid          -- 13 bit */
-        /* reserved     -- 4  bit */
-        /* info length  -- 12 bit */
-        /* info         -- x  bit */
-        /**************************/
+        /********************************************/
+        /* stream type  -- 8  bit                   */
+        /* reserved     -- 3  bit                   */
+        /* pid          -- 13 bit                   */
+        /* reserved     -- 4  bit                   */
+        /* info length  -- 12 bit                   */
+        /* info         -- (info length) * 8  bit   */
+        /********************************************/
 
         uint16_t read_bytes = 0;
         int16_t stream_type = remain_buf[0];
