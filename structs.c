@@ -16,6 +16,18 @@ void cgts_program_free(struct cgts_program * program) {
     free(program);
 }
 
+bool cgts_program_pid_exist(struct cgts_program * program, uint16_t pid) {
+    if (program->pids_num >= MAX_PIDS_PER_PROGRAM) {
+        return false;
+    }
+    for(int i=0;i<program->pids_num;i++) {
+        if (program->pids[i] == pid) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool cgts_program_pid_add(struct cgts_program * program, uint16_t pid) {
     if (program->pids_num >= MAX_PIDS_PER_PROGRAM) {
         return false;
@@ -42,6 +54,20 @@ struct cgts_pid_buffer * cgts_pid_buffer_alloc(uint16_t pid) {
 void cgts_pid_buffer_free(struct cgts_pid_buffer * pid_buf) {
     free(pid_buf->buf);
     free(pid_buf);
+}
+
+void cgts_pid_buffer_print_hex(struct cgts_pid_buffer * pid_buf) {
+    int i;
+    for(i=0;i<pid_buf->buf_pos;i++) {
+        fprintf(stdout, " %02x", pid_buf->buf[i]);
+        if (i % 8 == 7) {
+            fprintf(stdout, "  ");
+        }
+        if (i % 16 == 15) {
+            fprintf(stdout, "\n");
+        }
+    }
+    fprintf(stdout, "\n");
 }
 
 bool cgts_pid_buffer_append(struct cgts_pid_buffer * pid_buf, const uint8_t * ts_payload, uint32_t ts_payload_len) {

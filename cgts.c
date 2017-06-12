@@ -13,18 +13,63 @@ bool cgts_pmt_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
     uint8_t version = (p[2] >> 1) & 0x1f;
     uint8_t sec_num = p[3];
     uint8_t last_sec_num = p[4];
-    printf("program_id:[%d], version: [%d], sec_num: [%d], last_sec_num:[%d]\n", program_id, version, sec_num, last_sec_num);
+    //printf("program_id:[%d], version: [%d], sec_num: [%d], last_sec_num:[%d]\n", program_id, version, sec_num, last_sec_num);
 
     int16_t pcr_pid = ((p[5] << 8) | p[6] ) & 0x1fff;
     int16_t program_info_length = ((p[7] << 8) | p[8] ) & 0x0fff;
-    printf("pcr_pid:[%d], program_info_length: [%d]\n", pcr_pid, program_info_length);
+    //printf("pcr_pid:[%d], program_info_length: [%d]\n", pcr_pid, program_info_length);
     //exit(0);
 
     int16_t ptr_moved = 7 + program_info_length;
     if (ptr_moved >= pid_buf->buf_pos) {
         return false;
     }
-    p = p + 7 + program_info_length;
+
+    //cgts_pid_buffer_print_hex(pid_buf);
+    uint8_t * remain_buf = p + 9 + program_info_length; /* skip program info length */
+    int32_t remain_buf_len = pid_buf->buf_pos - 9 /* bytes before pid map in pmt */ - program_info_length;
+    while(remain_buf_len >= 5 /* min pid desc length is 40 bit = 5 byte */ ) {
+        /**************************/
+        /* stream type  -- 8  bit */
+        /* reserved     -- 3  bit */
+        /* pid          -- 13 bit */
+        /* reserved     -- 4  bit */
+        /* info length  -- 12 bit */
+        /* info         -- x  bit */
+        /**************************/
+
+        uint16_t read_bytes = 0;
+        int16_t stream_type = remain_buf[0];
+        if (stream_type < 0) {
+            break;
+        } else {
+            read_bytes += 1;
+        }
+
+        int32_t pid = (remain_buf[1] << 8) | remain_buf[2];
+        if (pid < 0) {
+            break;
+        } else {
+            read_bytes += 2;
+            pid &= 0x1fff;
+        }
+
+        int32_t es_info_length = (remain_buf[3] << 8) | remain_buf[4];
+        if (es_info_length < 0) {
+            break;
+        } else {
+            read_bytes += 2;
+            es_info_length &= 0x0fff;
+        }
+
+        int32_t program_index = cgts_programs_index(ct, program_id);
+        if (cgts_program_pid_exist(ct->programs[program_index], pid) == false) {
+            cgts_program_pid_add(ct->programs[program_index], pid);
+        }
+
+        remain_buf = remain_buf + read_bytes + es_info_length;
+        remain_buf_len = remain_buf_len - read_bytes - es_info_length;
+    }
 
     // go on HERE!
     // go on HERE!

@@ -2002,6 +2002,7 @@ static void pmt_cb(MpegTSFilter *filter, const uint8_t *section, int section_len
     for (;;) {
         st = 0;
         pes = NULL;
+        fprintf(stderr, "pmt_hex:[%x][%x][%x]\n", p[0], p[1], p[2]);
         stream_type = get8(&p, p_end);
         if (stream_type < 0)
             break;
@@ -2009,6 +2010,8 @@ static void pmt_cb(MpegTSFilter *filter, const uint8_t *section, int section_len
         if (pid < 0)
             goto out;
         pid &= 0x1fff;
+        // chengang tag
+        fprintf(stderr, "stream_type:[%d], pid_in_pmt:[%d]\n", stream_type, pid);
         if (pid == ts->current_pid)
             goto out;
 
