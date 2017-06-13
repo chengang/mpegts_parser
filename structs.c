@@ -193,6 +193,30 @@ bool cgts_program_create(struct cgts_context * ct, uint16_t prog_id, uint16_t pm
     return true;
 }
 
+bool cgts_program_delete(struct cgts_context * ct, uint16_t prog_id, uint16_t pmt_pid) {
+    if (ct->programs_num > MAX_PROGRAMS_IN_SIGNLE_MPEGTS) {
+        return false;
+    }
+
+    bool is_found = false;
+    for (int i=0;i<ct->programs_num;i++) {
+        if (prog_id == ct->programs[i]->program_id) {
+            cgts_program_free(ct->programs[i]);
+            is_found = true;
+        }
+        if (is_found == true && i < ((ct->programs_num) - 1) ) {
+            ct->programs[i] = ct->programs[i+1];
+        }
+    }
+
+    if (is_found == false) {
+        return false;
+    }
+
+    ct->programs_num = ct->programs_num - 1;
+    return true;
+}
+
 //
 // Pid-buffer Functions
 //

@@ -76,6 +76,7 @@ void cgts_context_debug(struct cgts_context * ct);
 bool cgts_programs_exists(struct cgts_context * ct, uint16_t prog_id);
 int32_t cgts_programs_index(struct cgts_context * ct, uint16_t prog_id);
 bool cgts_program_create(struct cgts_context * ct, uint16_t prog_id, uint16_t pmt_pid);
+bool cgts_program_delete(struct cgts_context * ct, uint16_t prog_id, uint16_t pmt_pid);
 
 #define CGTS_PID_TYPE_PAT       0x10
 #define CGTS_PID_TYPE_PMT       0x11

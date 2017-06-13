@@ -7,7 +7,7 @@ bool cgts_sdt_parse(struct cgts_context * ct, const uint8_t * buf) {
 }
 
 bool cgts_pmt_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) {
-    printf("PMT found\n");
+    //printf("PMT found\n");
     uint8_t * p = pid_buf->buf;
     uint16_t program_id = (p[0] << 8) | p[1];
     uint8_t version = (p[2] >> 1) & 0x1f;
@@ -71,14 +71,6 @@ bool cgts_pmt_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
         remain_buf_len = remain_buf_len - read_bytes - es_info_length;
     }
 
-    // go on HERE!
-    // go on HERE!
-    // go on HERE!
-    // go on HERE!
-    // go on HERE!
-    // go on HERE!
-    // go on HERE!
-
     return true;
 }
 
@@ -108,14 +100,15 @@ bool cgts_pat_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
         uint16_t pmt_pid = 
             ((p[5+i+2] << 8)                        /* third byte */ 
              | p[6+i+2])                            /* fourth byte */ & 0x1fff; 
-        printf("progid:[%d], pid:[%d]\n", program_id, pmt_pid);
+        //printf("progid:[%d], pid:[%d]\n", program_id, pmt_pid);
         i += 4;
 
         // fill PMT`s pid into context
         if (cgts_programs_exists(ct, program_id) == false) {
             cgts_program_create(ct, program_id, pmt_pid);
         } else {
-            // todo: delete program_id then cgts_program_create
+            cgts_program_delete(ct, program_id, pmt_pid);
+            cgts_program_create(ct, program_id, pmt_pid);
         }
     }
 
@@ -249,6 +242,14 @@ bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_star
             cgts_pmt_parse(ct, ct->pid_buf[pid_buffer_index]);
             break;
     }
+
+    // go on HERE!
+    // go on HERE!
+    // go on HERE!
+    // go on HERE!
+    // go on HERE!
+    // go on HERE!
+    // go on HERE!
 
     return true;
 
