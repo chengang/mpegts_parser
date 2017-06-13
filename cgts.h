@@ -25,11 +25,20 @@
 #define CGTS_STREAM_TYPE_VIDEO_CAVS      0x42
 #define CGTS_STREAM_TYPE_VIDEO_VC1       0xea
 #define CGTS_STREAM_TYPE_VIDEO_DIRAC     0xd1
-
 #define CGTS_STREAM_TYPE_AUDIO_AC3       0x81
 #define CGTS_STREAM_TYPE_AUDIO_DTS       0x82
 #define CGTS_STREAM_TYPE_AUDIO_TRUEHD    0x83
 #define CGTS_STREAM_TYPE_AUDIO_EAC3      0x87
+
+#define CGTS_STREAM_ID_PADDING_STREAM           0xbe
+#define CGTS_STREAM_ID_PROGRAM_STREAM_MAP       0xbc
+#define CGTS_STREAM_ID_PRIVATE_STREAM_2         0xbf
+#define CGTS_STREAM_ID_ECM                      0xf0
+#define CGTS_STREAM_ID_EMM                      0xf1
+#define CGTS_STREAM_ID_PROGRAM_STREAM_DIRECTORY 0xff
+#define CGTS_STREAM_ID_DSMCC_STREAM             0xf2
+#define CGTS_STREAM_ID_H_222_1_TYPE_E           0xf8
+#define CGTS_STREAM_ID_PRIVATE_STREAM_1         0xbd
 
 bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_start, const uint8_t * ts_payload, uint32_t ts_payload_len);
 

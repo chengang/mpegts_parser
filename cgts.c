@@ -179,7 +179,13 @@ bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp,
 }
 
 bool cgts_pid_buffer_append_pes_header(struct cgts_pid_buffer * pid_buf, const uint8_t * ts_payload, uint32_t ts_payload_len) {
-    pid_buf->expect_len = 999999;
+    if (! (ts_payload[0] == 0x00 && ts_payload[1] == 0x00 && ts_payload[2] == 0x01 ) ) {
+        fprintf(stdout, "PES header error\n");
+        return false;
+    }
+    uint8_t stream_id = ts_payload[3];
+    //uint16_t expect_len = (ts_payload[4] << 8) | ts_payload[5];
+    pid_buf->expect_len = (ts_payload[4] << 8) | ts_payload[5];
     return cgts_pid_buffer_append(pid_buf, ts_payload, ts_payload_len);
 }
 
@@ -229,7 +235,7 @@ bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_star
         cgts_pid_buffer_append(ct->pid_buf[pid_buffer_index], ts_payload, ts_payload_len);
     }
 
-    // is packet complete ?
+    // check this TS packet complete the PXX packet, if not skip following processes
     if (cgts_pid_buffer_complete(ct->pid_buf[pid_buffer_index]) == false) {
         return true;
     }
@@ -237,19 +243,18 @@ bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_star
     switch (pid_type) {
         case CGTS_PID_TYPE_PAT:
             cgts_pat_parse(ct, ct->pid_buf[pid_buffer_index]);
+            return true;
             break;
         case CGTS_PID_TYPE_PMT:
             cgts_pmt_parse(ct, ct->pid_buf[pid_buffer_index]);
+            return true;
             break;
     }
 
     // go on HERE!
     // go on HERE!
-    // go on HERE!
-    // go on HERE!
-    // go on HERE!
-    // go on HERE!
-    // go on HERE!
+    // start parse PES!
+    // if pid in pmts and is pes
 
     return true;
 

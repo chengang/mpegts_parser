@@ -1044,6 +1044,9 @@ static int mpegts_push_data(MpegTSFilter *filter,
             if (pes->data_index == PES_START_SIZE) {
                 /* we got all the PES or section header. We can now
                  * decide */
+
+                // chengang : PES packet starts here. following three bytes are packet_start_code_prefix
+
                 if (pes->header[0] == 0x00 && pes->header[1] == 0x00 &&
                     pes->header[2] == 0x01) {
                     /* it must be an MPEG-2 PES stream */
