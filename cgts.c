@@ -208,16 +208,13 @@ bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_star
         }
     }
 
-
-    //if (cgts_pid_buffer_append(ct->pid_buf[pid_buffer_index], ts_payload, ts_payload_len) == false) {
-    //    return false;
-    //}
-
+    // check ts packet type
     int16_t pid_type = cgts_pid_type(ct, pid);
     if (pid_type == CGTS_PID_TYPE_UNKNOWN) {
         return false;
     }
 
+    // join ts packets into a PXX packet
     int32_t pid_buffer_index = cgts_pid_buffer_index(ct, pid);
     if (pid_buffer_index == -1) {
         return false;
@@ -251,36 +248,14 @@ bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_star
             return true;
             break;
         case CGTS_PID_TYPE_PES:
+            // go on HERE!
+            // go on HERE!
+            // start parse PES!
             printf("hihi, i am pes!\n");
             break;
     }
 
-
-    // go on HERE!
-    // go on HERE!
-    // start parse PES!
-    // if pid in pmts and is pes
-
     return true;
-
-
-#if 0
-    if (tsp->pid == CGTS_PID_PAT) {
-        /* PAT */
-    } else if (tsp->pid == CGTS_PID_CAT) {
-        /* CAT */
-        cgts_cat_parse(ct, p);
-    } else if (tsp->pid == CGTS_PID_SDT) {
-        /* Transport Stream Desc Table */
-        cgts_sdt_parse(ct, p);
-    } else {
-        if (tsp->unit_start_indicator == 0) {
-            //append_payload_to_pid(buf);
-        }
-        /* NIT or PMT or PES */
-        cgts_ts_packet_payload_parse(ct, p);
-    }
-#endif
 }
 
 bool cgts_analyze_ts_packet(struct cgts_context * ct, uint8_t * buf) {
