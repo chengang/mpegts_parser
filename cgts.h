@@ -38,7 +38,6 @@
 #define CGTS_STREAM_ID_PROGRAM_STREAM_DIRECTORY 0xff
 #define CGTS_STREAM_ID_DSMCC_STREAM             0xf2
 #define CGTS_STREAM_ID_H_222_1_TYPE_E           0xf8
-#define CGTS_STREAM_ID_PRIVATE_STREAM_1         0xbd
 
 bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_start, const uint8_t * ts_payload, uint32_t ts_payload_len);
 

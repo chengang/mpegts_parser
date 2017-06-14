@@ -1113,6 +1113,7 @@ skip:
             break;
         /**********************************************/
         /* PES packing parsing */
+        // chengang 2017-6-14 start parse finally part of mpegts start
         case MPEGTS_PESHEADER:
             len = PES_HEADER_SIZE - pes->data_index;
             if (len < 0)
@@ -1233,6 +1234,7 @@ skip:
                 }
             }
             break;
+        // chengang 2017-6-14 start parse finally part of mpegts end
         case MPEGTS_PAYLOAD:
             if (pes->buffer) {
                 if (pes->data_index > 0 &&

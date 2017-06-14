@@ -1,10 +1,28 @@
 #include "cgts.h"
 
 bool cgts_pes_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) {
+    //printf("hihi, i am pes!, my stream id is [%02x]\n", pid_buf->stream_id);
+    if (pid_buf->stream_id == CGTS_STREAM_ID_PADDING_STREAM) {
+        /* skip padding stream */
+        return true;
+    }
+
+    if (pid_buf->stream_id == CGTS_STREAM_ID_PROGRAM_STREAM_MAP
+            || pid_buf->stream_id == CGTS_STREAM_ID_PROGRAM_STREAM_MAP
+            || pid_buf->stream_id == CGTS_STREAM_ID_PRIVATE_STREAM_2
+            || pid_buf->stream_id == CGTS_STREAM_ID_ECM
+            || pid_buf->stream_id == CGTS_STREAM_ID_EMM
+            || pid_buf->stream_id == CGTS_STREAM_ID_PROGRAM_STREAM_DIRECTORY
+            || pid_buf->stream_id == CGTS_STREAM_ID_DSMCC_STREAM
+            || pid_buf->stream_id == CGTS_STREAM_ID_H_222_1_TYPE_E
+            ) {
+        /* Maybe: pass the payload to upper-layer application */
+        return true;
+    }
+
     // go on HERE!
-    // go on HERE!
-    // start parse PES!
-    printf("hihi, i am pes!\n");
+    // start parse the longest main PES part in SPEC
+
     return true;
 }
 
