@@ -36,6 +36,7 @@ bool cgts_program_pid_add(struct cgts_program * program, uint16_t pid, uint16_t 
 struct cgts_pid_buffer {
     uint16_t pid;
     uint8_t table_id;
+    uint8_t stream_id;
     uint32_t expect_len;
     uint8_t * buf;
     uint32_t buf_pos;

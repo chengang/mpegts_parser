@@ -182,7 +182,7 @@ bool cgts_pid_buffer_append_pes_header(struct cgts_pid_buffer * pid_buf, const u
         fprintf(stdout, "PES header error\n");
         return false;
     }
-    uint8_t stream_id = ts_payload[3];
+    pid_buf->stream_id = ts_payload[3];
     pid_buf->expect_len = (ts_payload[4] << 8) | ts_payload[5];
     //printf("expect length in header:[%d]\n", pid_buf->expect_len);
     return cgts_pid_buffer_append(pid_buf

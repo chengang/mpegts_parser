@@ -45,6 +45,8 @@ bool cgts_program_pid_add(struct cgts_program * program, uint16_t pid, uint16_t 
 struct cgts_pid_buffer * cgts_pid_buffer_alloc(uint16_t pid) {
     struct cgts_pid_buffer * pid_buf = calloc(1, sizeof(struct cgts_pid_buffer));
     pid_buf->pid = pid;
+    pid_buf->table_id = 0;
+    pid_buf->stream_id = 0;
     pid_buf->expect_len = 0;
     pid_buf->buf = calloc(1, PXX_BUF_LEN_DEFAULT);
     pid_buf->buf_pos = 0;
@@ -86,6 +88,8 @@ bool cgts_pid_buffer_append(struct cgts_pid_buffer * pid_buf, const uint8_t * ts
 
 void cgts_pid_buffer_reset(struct cgts_pid_buffer * pid_buf) {
     memset(pid_buf->buf, 0, pid_buf->buf_cap);
+    pid_buf->table_id = 0;
+    pid_buf->stream_id = 0;
     pid_buf->expect_len = 0;
     pid_buf->buf_pos = 0;
 }
@@ -153,7 +157,8 @@ void cgts_context_debug(struct cgts_context * ct) {
 
     fprintf(stdout, "|  ------------ pid information ------------   \n");
     for (int i=0;i<ct->pid_buf_num;i++) {
-        fprintf(stdout, "|  | pid: %d, table id: %d, capacity: %d\n", ct->pid_buf[i]->pid, ct->pid_buf[i]->table_id, ct->pid_buf[i]->buf_cap);
+        fprintf(stdout, "|  | pid: %d, table id: %d, stream id: 0x%02x capacity: %d\n"
+                , ct->pid_buf[i]->pid, ct->pid_buf[i]->table_id, ct->pid_buf[i]->stream_id, ct->pid_buf[i]->buf_cap);
     }
     fprintf(stdout, "|  -----------------------------------------   \n");
     fprintf(stdout, "|\n");
