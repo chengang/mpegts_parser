@@ -91,6 +91,7 @@ void cgts_pid_buffer_reset(struct cgts_pid_buffer * pid_buf) {
 }
 
 bool cgts_pid_buffer_complete(struct cgts_pid_buffer * pid_buf) {
+    //printf("len:[%d],expect:[%d]\n", pid_buf->buf_pos, pid_buf->expect_len);
     if (pid_buf->buf_pos == pid_buf->expect_len) {
         return true;
     } else {

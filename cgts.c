@@ -142,20 +142,19 @@ bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp,
         uint8_t adaptation_len = buf[4];
         uint8_t adaptation_flags = buf[5];
 
-        if (!(adaptation_flags & 0x10)) {   // PCR_flag
-            return false;
+        if (adaptation_flags & 0x10) {   // PCR_flag, means a PCR is in this tspacket
+            if (adaptation_len < 7) { // PCR need 6btye + 1byte flags
+                return false;
+            }
+            int64_t pcr_high = buf[6] * 256 * 256 * 256 + buf[7] * 256 * 256 + buf[8] * 256 + buf[9];
+            pcr_high = (pcr_high << 1) | (buf[10] >> 7);
+            int pcr_low = ((buf[10] & 1) << 8) | buf[11];
+            tsp->pcr = pcr_high * 300 + pcr_low;
         }
-        if (adaptation_len < 7) { // PCR need 6btye + 1byte flags
-            return false;
-        }
-        int64_t pcr_high = buf[6] * 256 * 256 * 256 + buf[7] * 256 * 256 + buf[8] * 256 + buf[9];
-        pcr_high = (pcr_high << 1) | (buf[10] >> 7);
-        int pcr_low = ((buf[10] & 1) << 8) | buf[11];
-        tsp->pcr = pcr_high * 300 + pcr_low;
         //fprintf(stdout, "pcr: %lld\n", tsp->pcr);
 
         ts_payload = ts_payload + adaptation_len /* afc length */ + 1 /* afc header */;
-        ts_payload_len = ts_payload_len - adaptation_len;
+        ts_payload_len = ts_payload_len - adaptation_len - 1;
     }
 
     if (!(tsp->has_payload)) {
@@ -184,9 +183,11 @@ bool cgts_pid_buffer_append_pes_header(struct cgts_pid_buffer * pid_buf, const u
         return false;
     }
     uint8_t stream_id = ts_payload[3];
-    //uint16_t expect_len = (ts_payload[4] << 8) | ts_payload[5];
     pid_buf->expect_len = (ts_payload[4] << 8) | ts_payload[5];
-    return cgts_pid_buffer_append(pid_buf, ts_payload, ts_payload_len);
+    //printf("expect length in header:[%d]\n", pid_buf->expect_len);
+    return cgts_pid_buffer_append(pid_buf
+            , ts_payload + 6 /* 6 Btyes = 3 (packet_start_code_prefix) + 1 (stream_id) + 2 (PES_packet_length) */
+            , ts_payload_len - 6 );
 }
 
 bool cgts_pid_buffer_append_psi_header(struct cgts_pid_buffer * pid_buf, const uint8_t * ts_payload, uint32_t ts_payload_len) {
@@ -249,7 +250,11 @@ bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_star
             cgts_pmt_parse(ct, ct->pid_buf[pid_buffer_index]);
             return true;
             break;
+        case CGTS_PID_TYPE_PES:
+            printf("hihi, i am pes!\n");
+            break;
     }
+
 
     // go on HERE!
     // go on HERE!
