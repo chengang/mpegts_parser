@@ -1,8 +1,10 @@
 #include "cgts.h"
 
-bool cgts_sdt_parse(struct cgts_context * ct, const uint8_t * buf) {
-    printf("SDT found\n");
-    exit(0);
+bool cgts_pes_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) {
+    // go on HERE!
+    // go on HERE!
+    // start parse PES!
+    printf("hihi, i am pes!\n");
     return true;
 }
 
@@ -112,10 +114,6 @@ bool cgts_pat_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
         }
     }
 
-    return true;
-}
-
-bool cgts_ts_packet_payload_parse(struct cgts_context * ct, const uint8_t * buf) {
     return true;
 }
 
@@ -248,10 +246,8 @@ bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_star
             return true;
             break;
         case CGTS_PID_TYPE_PES:
-            // go on HERE!
-            // go on HERE!
-            // start parse PES!
-            printf("hihi, i am pes!\n");
+            cgts_pes_parse(ct, ct->pid_buf[pid_buffer_index]);
+            return true;
             break;
     }
 
