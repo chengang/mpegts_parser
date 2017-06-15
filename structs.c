@@ -138,6 +138,7 @@ struct cgts_context * cgts_alloc_with_file(const char * filename) {
     context->input_fp = fopen(filename, "r");
     context->programs_num = 0;
     context->pid_buf_num = 1;
+    context->just_parsed_pid_buf_idx = 0;
     context->pid_buf[(context->pid_buf_num - 1)] = cgts_pid_buffer_alloc(0);
     return context;
 }
@@ -175,8 +176,9 @@ void cgts_context_debug(struct cgts_context * ct) {
 
     fprintf(stdout, "|  ------------ pid information ------------   \n");
     for (int i=0;i<ct->pid_buf_num;i++) {
-        fprintf(stdout, "|  | pid: %d, table id: %d, stream id: 0x%02x capacity: %d\n"
-                , ct->pid_buf[i]->pid, ct->pid_buf[i]->table_id, ct->pid_buf[i]->stream_id, ct->pid_buf[i]->buf_cap);
+        fprintf(stdout, "|  | pid: %d, table id: %d, stream id: 0x%02x, capacity: %d, pts: %lld, dts: %lld\n"
+                , ct->pid_buf[i]->pid, ct->pid_buf[i]->table_id, ct->pid_buf[i]->stream_id
+                , ct->pid_buf[i]->buf_cap, ct->pid_buf[i]->pts, ct->pid_buf[i]->dts);
     }
     fprintf(stdout, "|  -----------------------------------------   \n");
     fprintf(stdout, "|\n");

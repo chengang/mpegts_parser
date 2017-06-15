@@ -64,9 +64,12 @@ bool cgts_pes_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
         /* pts_dts_flag == 00 -- no pts and dts shall be present */
         /* pts_dts_flag == 01 -- forbidden */
     }
+    //fprintf(stdout, "pts: %lld, dts: %lld\n", pid_buf->pts, pid_buf->dts);
 
     pid_buf->payload_offset = pes_header_length;
     pid_buf->parsed = true;
+
+    ct->just_parsed_pid_buf_idx = cgts_pid_buffer_index(ct, pid_buf->pid);
 
     return true;
 }

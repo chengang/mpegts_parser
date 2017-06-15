@@ -75,6 +75,7 @@ struct cgts_context {
 
     struct cgts_pid_buffer * pid_buf[MAX_PIDS_IN_SIGNLE_MPEGTS];
     uint16_t pid_buf_num;
+    int16_t just_parsed_pid_buf_idx;
 };
 
 struct cgts_context * cgts_alloc_with_memory(uint8_t * buf);

@@ -1157,6 +1157,11 @@ skip:
                     pes->dts = ff_parse_pes_pts(r);
                     r += 5;
                 }
+                // added by chengang start
+                fprintf(stderr, "chengang - pts: %lld, dts: %lld\n", pes->pts, pes->dts);
+                // added by chengang end
+
+
                 pes->extended_stream_id = -1;
                 if (flags & 0x01) { /* PES extension */
                     pes_ext = *r++;
