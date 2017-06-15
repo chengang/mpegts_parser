@@ -1,5 +1,14 @@
 #include "cgts.h"
 
+int64_t cgts_pes_parse_pts_dts(uint8_t * buf) {
+    // following SPEC page 31
+    int64_t ts_32_30 = (int64_t)(*buf & 0x0e) << 29;
+    int64_t ts_29_15 = ( ( (buf[1] << 8) | buf[2] ) >> 1) << 15;
+    int64_t ts_14_0  = ( (buf[3] << 8) | buf[4] ) >> 1;
+    int64_t ts = ts_32_30 | ts_29_15 | ts_14_0;
+    return ts;
+}
+
 bool cgts_pes_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) {
     //printf("hihi, i am pes!, my stream id is [%02x]\n", pid_buf->stream_id);
     if (pid_buf->stream_id == CGTS_STREAM_ID_PADDING_STREAM) {
@@ -22,6 +31,42 @@ bool cgts_pes_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
 
     // go on HERE!
     // start parse the longest main PES part in SPEC
+
+    uint8_t * p = pid_buf->buf;
+    uint8_t useless_flags = p[0];
+    uint8_t flags = p[1];
+    uint8_t pes_header_length = p[2];
+
+    /*****************************************/
+    /**                                     **/
+    /**            FLAGS`s STRUCT           **/
+    /**                                     **/
+    /**  PTS_DTS_flags               2 bit  **/
+    /**  ES Clock Refrence flag      1 bit  **/   
+    /**  ES_rate flag                1 bit  **/   
+    /**  DSM_trick_mode_flag         1 bit  **/   
+    /**  additional_copy_info_flag   1 bit  **/   
+    /**  PES_CRC_flag                1 bit  **/   
+    /**  PES_extension_flag          1 bit  **/   
+    /**                                     **/
+    /*****************************************/
+
+    if ((flags & 0xc0) == 0x80) { 
+        /* pts_dts_flag == 10 -- only pts shall be present */
+        pid_buf->pts = pid_buf->dts = cgts_pes_parse_pts_dts(p + 3 /* 2 bytes flags + 1 byte pes header length */);
+    } else if ((flags & 0xc0) == 0xc0) {
+        /* pts_dts_flag == 11 -- pts and dts shall be present */
+        pid_buf->pts = cgts_pes_parse_pts_dts(p + 3 /* 2 bytes flags + 1 byte pes header length */);
+        pid_buf->dts = cgts_pes_parse_pts_dts(p 
+                + 3 /* 2 bytes flags + 1 byte pes header length */
+                + 5 /* the previous pts value used 5 bytes */);
+    } else {
+        /* pts_dts_flag == 00 -- no pts and dts shall be present */
+        /* pts_dts_flag == 01 -- forbidden */
+    }
+
+    pid_buf->payload_offset = pes_header_length;
+    pid_buf->parsed = true;
 
     return true;
 }

@@ -44,10 +44,18 @@ bool cgts_program_pid_add(struct cgts_program * program, uint16_t pid, uint16_t 
 
 struct cgts_pid_buffer * cgts_pid_buffer_alloc(uint16_t pid) {
     struct cgts_pid_buffer * pid_buf = calloc(1, sizeof(struct cgts_pid_buffer));
+    pid_buf->parsed = false;
+    pid_buf->filled_up = false;
+
     pid_buf->pid = pid;
     pid_buf->table_id = 0;
     pid_buf->stream_id = 0;
     pid_buf->expect_len = 0;
+    pid_buf->pts = 0;
+    pid_buf->dts = 0;
+
+    pid_buf->payload_offset = 0;
+
     pid_buf->buf = calloc(1, PXX_BUF_LEN_DEFAULT);
     pid_buf->buf_pos = 0;
     pid_buf->buf_cap = PXX_BUF_LEN_DEFAULT;
@@ -87,18 +95,28 @@ bool cgts_pid_buffer_append(struct cgts_pid_buffer * pid_buf, const uint8_t * ts
 }
 
 void cgts_pid_buffer_reset(struct cgts_pid_buffer * pid_buf) {
+    pid_buf->parsed = false;
+    pid_buf->filled_up = false;
+
     memset(pid_buf->buf, 0, pid_buf->buf_cap);
     pid_buf->table_id = 0;
     pid_buf->stream_id = 0;
     pid_buf->expect_len = 0;
+    pid_buf->pts = 0;
+    pid_buf->dts = 0;
+
+    pid_buf->payload_offset = 0;
+
     pid_buf->buf_pos = 0;
 }
 
 bool cgts_pid_buffer_complete(struct cgts_pid_buffer * pid_buf) {
     //printf("len:[%d],expect:[%d]\n", pid_buf->buf_pos, pid_buf->expect_len);
     if (pid_buf->buf_pos == pid_buf->expect_len) {
+        pid_buf->filled_up = true;
         return true;
     } else {
+        pid_buf->filled_up = false;
         return false;
     }
 }

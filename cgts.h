@@ -41,6 +41,7 @@
 
 bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_start, const uint8_t * ts_payload, uint32_t ts_payload_len);
 
+int64_t cgts_pes_parse_pts_dts(uint8_t * buf);
 bool cgts_pes_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf);
 bool cgts_pmt_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf);
 bool cgts_pat_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf);

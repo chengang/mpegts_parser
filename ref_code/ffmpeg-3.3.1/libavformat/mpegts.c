@@ -1113,7 +1113,7 @@ skip:
             break;
         /**********************************************/
         /* PES packing parsing */
-        // chengang 2017-6-14 start parse finally part of mpegts start
+        // the following case use for skip PES HEADER, useless for me.
         case MPEGTS_PESHEADER:
             len = PES_HEADER_SIZE - pes->data_index;
             if (len < 0)
@@ -1130,6 +1130,7 @@ skip:
             }
             break;
         case MPEGTS_PESHEADER_FILL:
+        // chengang 2017-6-14 start parse finally part of mpegts start
             len = pes->pes_header_size - pes->data_index;
             if (len < 0)
                 return AVERROR_INVALIDDATA;
@@ -1187,6 +1188,7 @@ skip:
                     p += 5;
                     buf_size -= 5;
                 }
+        // chengang 2017-6-14 start parse finally part of mpegts end
                 if (   pes->ts->fix_teletext_pts
                     && (   pes->st->codecpar->codec_id == AV_CODEC_ID_DVB_TELETEXT
                         || pes->st->codecpar->codec_id == AV_CODEC_ID_DVB_SUBTITLE)
@@ -1234,7 +1236,6 @@ skip:
                 }
             }
             break;
-        // chengang 2017-6-14 start parse finally part of mpegts end
         case MPEGTS_PAYLOAD:
             if (pes->buffer) {
                 if (pes->data_index > 0 &&
