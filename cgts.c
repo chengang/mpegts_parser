@@ -256,6 +256,7 @@ bool cgts_pid_buffer_append_pes_header(struct cgts_pid_buffer * pid_buf, const u
 
 bool cgts_pid_buffer_append_psi_header(struct cgts_pid_buffer * pid_buf, const uint8_t * ts_payload, uint32_t ts_payload_len) {
     uint8_t pointer_field = ts_payload[0];
+    //printf("pointer_field:[%d]\n", pointer_field);
     const uint8_t * p = ts_payload + pointer_field + 1;
     pid_buf->table_id = p[0];
     pid_buf->expect_len = ( (p[1] & 0x0f) << 8) | p[2];
@@ -326,7 +327,7 @@ bool cgts_analyze_ts_packet(struct cgts_context * ct, uint8_t * buf) {
 
     struct cgts_ts_packet * tsp = cgts_ts_packet_alloc();
     cgts_ts_packet_parse(ct, tsp, buf);
-    cgts_ts_packet_debug(ct, tsp);
+    cgts_ts_packet_debug(ct, tsp);  // todo: comment the line when finished
     cgts_ts_packet_free(tsp);
     return true;
 }

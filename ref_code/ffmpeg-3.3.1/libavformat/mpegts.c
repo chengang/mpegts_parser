@@ -2106,7 +2106,7 @@ out:
 
 static void pat_cb(MpegTSFilter *filter, const uint8_t *section, int section_len)
 {
-    fprintf(stderr, "section_len[%d]\n", section_len);
+    fprintf(stderr, "PAT section_len[%d]\n", section_len);
     MpegTSContext *ts = filter->u.section_filter.opaque;
     MpegTSSectionFilter *tssf = &filter->u.section_filter;
     SectionHeader h1, *h = &h1;
@@ -2143,6 +2143,7 @@ static void pat_cb(MpegTSFilter *filter, const uint8_t *section, int section_len
         if (pmt_pid == ts->current_pid)
             break;
 
+        fprintf(stderr, "PAT PMT:[%d]\n", pmt_pid);
         av_log(ts->stream, AV_LOG_TRACE, "sid=0x%x pid=0x%x\n", sid, pmt_pid);
 
         if (sid == 0x0000) {
