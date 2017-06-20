@@ -15,6 +15,42 @@
 #define CGTS_PID_CAT 0x01
 #define CGTS_PID_SDT 0x02
 
+#define CGTS_STREAM_TYPE_VIDEO_MPEG1    		0x01
+#define CGTS_STREAM_TYPE_VIDEO_MPEG2    		0x02
+#define CGTS_STREAM_TYPE_AUDIO_MPEG1    		0x03
+#define CGTS_STREAM_TYPE_AUDIO_MPEG2    		0x04
+#define CGTS_STREAM_TYPE_PRIVATE_SECTION		0x05
+#define CGTS_STREAM_TYPE_PRIVATE_DATA   		0x06
+#define CGTS_STREAM_TYPE_AUDIO_AAC      		0x0f
+#define CGTS_STREAM_TYPE_AUDIO_AAC_LATM 		0x11
+#define CGTS_STREAM_TYPE_VIDEO_MPEG4    		0x10
+#define CGTS_STREAM_TYPE_METADATA       		0x15
+#define CGTS_STREAM_TYPE_VIDEO_H264     		0x1b
+#define CGTS_STREAM_TYPE_VIDEO_HEVC     		0x24
+#define CGTS_STREAM_TYPE_VIDEO_CAVS     		0x42
+#define CGTS_STREAM_TYPE_VIDEO_VC1      		0xea
+#define CGTS_STREAM_TYPE_VIDEO_DIRAC    		0xd1
+#define CGTS_STREAM_TYPE_AUDIO_AC3      		0x81
+#define CGTS_STREAM_TYPE_AUDIO_DTS      		0x82
+#define CGTS_STREAM_TYPE_AUDIO_TRUEHD   		0x83
+#define CGTS_STREAM_TYPE_AUDIO_EAC3     		0x87
+
+bool cgts_stream_type_to_string(uint8_t id, char * str, uint16_t str_len);
+
+// smaller header stream IDs
+#define CGTS_STREAM_ID_PADDING_STREAM          				0xbe
+#define CGTS_STREAM_ID_PROGRAM_STREAM_MAP      				0xbc
+#define CGTS_STREAM_ID_PRIVATE_STREAM_2        				0xbf
+#define CGTS_STREAM_ID_ECM                     				0xf0
+#define CGTS_STREAM_ID_EMM                     				0xf1
+#define CGTS_STREAM_ID_PROGRAM_STREAM_DIRECTORY				0xff
+#define CGTS_STREAM_ID_DSMCC_STREAM            				0xf2
+#define CGTS_STREAM_ID_H_222_1_TYPE_E          				0xf8
+// bigger header stream IDs
+#define CGTS_STREAM_ID_PRIVATE_STREAM_1                     0xbd
+#define CGTS_STREAM_ID_AUDIO_MPEG1_MPEG2_MPEG4_AAC          0xc0
+#define CGTS_STREAM_ID_VIDEO_MPEG1_MPEG2_MPEG4_AVC          0xe0
+
 /* program */
 #define MAX_PIDS_PER_PROGRAM 64
 struct cgts_program {

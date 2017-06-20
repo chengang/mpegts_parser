@@ -1,6 +1,74 @@
 #include "structs.h"
 
 /**********************************/
+/************** utils *************/
+/**********************************/
+
+bool cgts_stream_type_to_string(uint8_t id, char * str, uint16_t str_len) {
+    switch (id) {
+        case CGTS_STREAM_TYPE_VIDEO_MPEG1:
+            strncpy(str, "mpeg1_video", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_VIDEO_MPEG2:
+            strncpy(str, "mpeg2_video", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_AUDIO_MPEG1:
+            strncpy(str, "mpeg1_audio", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_AUDIO_MPEG2:
+            strncpy(str, "mpeg2_audio", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_PRIVATE_SECTION:
+            strncpy(str, "private_section", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_PRIVATE_DATA:
+            strncpy(str, "private_data", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_AUDIO_AAC:
+            strncpy(str, "aac_audio", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_AUDIO_AAC_LATM:
+            strncpy(str, "aaclatm_audio", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_VIDEO_MPEG4:
+            strncpy(str, "mpeg4_video", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_METADATA:
+            strncpy(str, "metadata", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_VIDEO_H264:
+            strncpy(str, "h264_video", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_VIDEO_HEVC:
+            strncpy(str, "hevc_video", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_VIDEO_CAVS:
+            strncpy(str, "cavs_video", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_VIDEO_VC1:
+            strncpy(str, "vc1_video", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_VIDEO_DIRAC:
+            strncpy(str, "dirac_video", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_AUDIO_AC3:
+            strncpy(str, "ac3_audio", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_AUDIO_DTS:
+            strncpy(str, "dts_audio", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_AUDIO_TRUEHD:
+            strncpy(str, "truehd_audio", str_len);
+            return true;
+        case CGTS_STREAM_TYPE_AUDIO_EAC3:
+            strncpy(str, "eac3_audio", str_len);
+            return true;
+        default:
+            return false;
+    }
+}
+
+/**********************************/
 /************ program *************/
 /**********************************/
 
@@ -168,7 +236,9 @@ void cgts_context_debug(struct cgts_context * ct) {
         fprintf(stdout, "|  | program id: %d, pmt id: %d\n", ct->programs[i]->program_id, ct->programs[i]->pmt_pid);
         fprintf(stdout, "|  |     pids:");
         for (int j=0;j<ct->programs[i]->pids_num;j++) {
-            fprintf(stdout, " %d[0x%02x]", ct->programs[i]->pids[j], ct->programs[i]->pids_stream_type[j]);
+            char stream_type_string[32];
+            cgts_stream_type_to_string(ct->programs[i]->pids_stream_type[j], stream_type_string, 32);
+            fprintf(stdout, " %d(%s)", ct->programs[i]->pids[j], stream_type_string);
         }
         fprintf(stdout, "\n");
     }
@@ -177,8 +247,14 @@ void cgts_context_debug(struct cgts_context * ct) {
 
     fprintf(stdout, "|  ------------ pid information ------------   \n");
     for (int i=0;i<ct->pid_buf_num;i++) {
-        fprintf(stdout, "|  | pid: %d, table id: %d, stream id: 0x%02x, capacity: %d, pts: %lld, dts: %lld\n"
-                , ct->pid_buf[i]->pid, ct->pid_buf[i]->table_id, ct->pid_buf[i]->stream_id
+        fprintf(stdout, "|  | pid: %d, table id: %d", ct->pid_buf[i]->pid, ct->pid_buf[i]->table_id);
+        fprintf(stdout, ", stream id: 0x%02x", ct->pid_buf[i]->stream_id);
+        if (ct->pid_buf[i]->stream_id == CGTS_STREAM_ID_AUDIO_MPEG1_MPEG2_MPEG4_AAC) {
+            fprintf(stdout, "(audio)");
+        } else if (ct->pid_buf[i]->stream_id == CGTS_STREAM_ID_VIDEO_MPEG1_MPEG2_MPEG4_AVC) {
+            fprintf(stdout, "(video)");
+        }
+        fprintf(stdout, ", capacity: %d, pts: %lld, dts: %lld\n"
                 , ct->pid_buf[i]->buf_cap, ct->pid_buf[i]->pts, ct->pid_buf[i]->dts);
     }
     fprintf(stdout, "|  -----------------------------------------   \n");

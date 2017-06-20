@@ -74,7 +74,7 @@ bool cgts_pes_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
         + 1 /* [1]:flags                    */
         + 1 /* [2]:pes_header_length        */;
 #if DEBUF_PES_PACKET_LAYER
-    //printf("pid: %d, payload_offset: %d\n", pid_buf->pid, pes_header_length);
+    printf("pid: %d, payload_offset: %d, stream_id: %02x\n", pid_buf->pid, pid_buf->payload_offset, pid_buf->stream_id);
     //print_hex(pid_buf->buf + pid_buf->payload_offset, 8);
     print_hex(pid_buf->buf + pid_buf->payload_offset, pid_buf->buf_pos - pid_buf->payload_offset);
     printf("\n");
