@@ -3,4 +3,4 @@ T01:
 clean:
 	rm -rfv cgts
 run:
-	./cgts demo.ts
+	./cgts h264_aac.ts
