@@ -1,5 +1,8 @@
 #include "cgts.h"
 
+#define DEBUG_TS_PACKET_LAYER   0
+#define DEBUF_PES_PACKET_LAYER  1
+
 int64_t cgts_pes_parse_pts_dts(uint8_t * buf) {
     // following SPEC page 31
     int64_t ts_32_30 = (int64_t)(*buf & 0x0e) << 29;
@@ -66,7 +69,16 @@ bool cgts_pes_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
     }
     //fprintf(stdout, "pts: %lld, dts: %lld\n", pid_buf->pts, pid_buf->dts);
 
-    pid_buf->payload_offset = pes_header_length;
+    pid_buf->payload_offset = pes_header_length 
+        + 1 /* [0]:useless flags            */
+        + 1 /* [1]:flags                    */
+        + 1 /* [2]:pes_header_length        */;
+#if DEBUF_PES_PACKET_LAYER
+    //printf("pid: %d, payload_offset: %d\n", pid_buf->pid, pes_header_length);
+    //print_hex(pid_buf->buf + pid_buf->payload_offset, 8);
+    print_hex(pid_buf->buf + pid_buf->payload_offset, pid_buf->buf_pos - pid_buf->payload_offset);
+    printf("\n");
+#endif
     pid_buf->parsed = true;
 
     ct->just_parsed_pid_buf_idx = cgts_pid_buffer_index(ct, pid_buf->pid);
@@ -327,7 +339,9 @@ bool cgts_analyze_ts_packet(struct cgts_context * ct, uint8_t * buf) {
 
     struct cgts_ts_packet * tsp = cgts_ts_packet_alloc();
     cgts_ts_packet_parse(ct, tsp, buf);
+#if DEBUG_TS_PACKET_LAYER
     cgts_ts_packet_debug(ct, tsp);  // todo: comment the line when finished
+#endif
     cgts_ts_packet_free(tsp);
     return true;
 }
