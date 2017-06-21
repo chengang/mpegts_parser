@@ -112,6 +112,9 @@ struct cgts_context {
     struct cgts_pid_buffer * pid_buf[MAX_PIDS_IN_SIGNLE_MPEGTS];
     uint16_t pid_buf_num;
     int16_t just_parsed_pid_buf_idx;
+
+    bool pat_found;
+    bool pmt_found;
 };
 
 struct cgts_context * cgts_alloc_with_memory(uint8_t * buf);
@@ -151,6 +154,7 @@ struct cgts_ts_packet {
 
 struct cgts_ts_packet * cgts_ts_packet_alloc();
 void cgts_ts_packet_free(struct cgts_ts_packet * tsp);
+void cgts_ts_packet_reset(struct cgts_ts_packet * tsp);
 void cgts_ts_packet_debug(struct cgts_context * ct, struct cgts_ts_packet * tsp);
 
 struct cgts_pat {

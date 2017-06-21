@@ -23,4 +23,6 @@ bool cgts_get188_from_file(FILE * fp, uint8_t * buf);
 bool cgts_get188(struct cgts_context * context, uint8_t * buf);
 void cgts_parse(struct cgts_context * context);
 
+bool cgts_find_pat_and_pmt(struct cgts_context * ct);
+
 #endif

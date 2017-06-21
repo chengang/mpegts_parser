@@ -1,7 +1,7 @@
 #include "cgts.h"
 
 #define DEBUG_TS_PACKET_LAYER   0
-#define DEBUF_PES_PACKET_LAYER  1
+#define DEBUF_PES_PACKET_LAYER  0
 
 int64_t cgts_pes_parse_pts_dts(uint8_t * buf) {
     // following SPEC page 31
@@ -151,6 +151,7 @@ bool cgts_pmt_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
         remain_buf_len = remain_buf_len - read_bytes - es_info_length;
     }
 
+    ct->pmt_found = true;
     return true;
 }
 
@@ -192,6 +193,7 @@ bool cgts_pat_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
         }
     }
 
+    ct->pat_found = true;
     return true;
 }
 
@@ -372,3 +374,25 @@ void cgts_parse(struct cgts_context * ct) {
     }
     cgts_context_debug(ct);
 }
+
+bool cgts_find_pat_and_pmt(struct cgts_context * ct) {
+    struct cgts_ts_packet * tsp = cgts_ts_packet_alloc();
+    uint8_t * ts_packet_buf = calloc(1, CGTS_PACKET_SIZE);
+    while(true) {
+        if (cgts_get188(ct, ts_packet_buf) == false) {
+            break;
+        }
+
+        cgts_ts_packet_parse(ct, tsp, ts_packet_buf);
+        cgts_ts_packet_reset(tsp);
+        memset(ts_packet_buf, 0, CGTS_PACKET_SIZE);
+
+        if (ct->pat_found == true && ct->pmt_found == true) {
+            break;
+        }
+    }
+    free(ts_packet_buf);
+    cgts_ts_packet_free(tsp);
+    return true;
+}
+

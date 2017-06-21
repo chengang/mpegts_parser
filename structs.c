@@ -205,10 +205,18 @@ struct cgts_context * cgts_alloc_with_file(const char * filename) {
     struct cgts_context * context = calloc(1, sizeof(struct cgts_context));
     context->input_type = CGTS_INPUT_TYPE_FILE;
     context->input_fp = fopen(filename, "r");
+
+    context->tsp_counter = 0;
+    context->ccounter = 0;
+
     context->programs_num = 0;
+
     context->pid_buf_num = 1;
-    context->just_parsed_pid_buf_idx = 0;
     context->pid_buf[(context->pid_buf_num - 1)] = cgts_pid_buffer_alloc(0);
+    context->just_parsed_pid_buf_idx = 0;
+
+    context->pat_found = false;
+    context->pmt_found = false;
     return context;
 }
 
@@ -392,6 +400,18 @@ struct cgts_ts_packet * cgts_ts_packet_alloc() {
 
 void cgts_ts_packet_free(struct cgts_ts_packet * tsp) {
     free(tsp);
+}
+
+void cgts_ts_packet_reset(struct cgts_ts_packet * tsp) {
+    tsp->sync_byte = 0;
+    tsp->unit_start_indicator = 0;
+    tsp->pid = 0;
+    tsp->scrambling_control = 0;
+    tsp->adaption_field_control = 0;
+    tsp->continuity_counter = 0;
+    tsp->has_adaptation = 0;
+    tsp->has_payload = 0;
+    tsp->pcr = 0;
 }
 
 void cgts_ts_packet_debug(struct cgts_context * ct, struct cgts_ts_packet * tsp) {
