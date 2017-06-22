@@ -51,7 +51,9 @@ bool cgts_stream_type_to_string(uint8_t id, char * str, uint16_t str_len);
 #define CGTS_STREAM_ID_AUDIO_MPEG1_MPEG2_MPEG4_AAC          0xc0
 #define CGTS_STREAM_ID_VIDEO_MPEG1_MPEG2_MPEG4_AVC          0xe0
 
+/***********/
 /* program */
+/***********/
 #define MAX_PIDS_PER_PROGRAM 64
 struct cgts_program {
     uint16_t program_id;
@@ -67,7 +69,9 @@ void cgts_program_free(struct cgts_program * program);
 bool cgts_program_pid_exist(struct cgts_program * program, uint16_t pid);
 bool cgts_program_pid_add(struct cgts_program * program, uint16_t pid, uint16_t stream_type);
 
+/**************/
 /* pid buffer */
+/**************/
 #define PXX_BUF_LEN_DEFAULT 1024
 struct cgts_pid_buffer {
     bool parsed;
@@ -94,7 +98,60 @@ bool cgts_pid_buffer_append(struct cgts_pid_buffer * pid_buf, const uint8_t * ts
 void cgts_pid_buffer_reset(struct cgts_pid_buffer * pid_buf);
 bool cgts_pid_buffer_complete(struct cgts_pid_buffer * pid_buf);
 
+/*************/
+/* ts packet */
+/*************/
+struct cgts_ts_packet {
+    uint8_t sync_byte;
+    uint8_t unit_start_indicator;
+    uint16_t pid;
+    uint8_t scrambling_control;
+    uint8_t adaption_field_control;
+    uint8_t continuity_counter;
+
+    uint8_t has_adaptation;
+    uint8_t has_payload;
+
+    uint64_t pcr;
+};
+
+struct cgts_ts_packet * cgts_ts_packet_alloc();
+void cgts_ts_packet_free(struct cgts_ts_packet * tsp);
+void cgts_ts_packet_reset(struct cgts_ts_packet * tsp);
+void cgts_ts_packet_debug(struct cgts_ts_packet * tsp);
+
+struct cgts_pat {
+    uint8_t table_id;
+    uint16_t stream_id;
+    uint8_t version;
+    uint8_t sec_num;
+    uint8_t last_sec_num;
+    struct cgts_program *prg;
+};
+
+/*****************/
+/* ts pxx packet */
+/*****************/
+#define CGTS_PXX_PACKET_DATA_CAP_DEFAULT    4096
+#define CGTS_PXX_PACKET_TYPE_UNKNOWN    0
+#define CGTS_PXX_PACKET_TYPE_PSI        1
+#define CGTS_PXX_PACKET_TYPE_PES        2
+struct cgts_pxx_packet {
+    uint8_t type;
+    uint8_t * data;
+    uint8_t data_len;
+    uint8_t data_cap;
+};
+struct cgts_pxx_packet * cgts_pxx_packet_alloc();
+void cgts_pxx_packet_free(struct cgts_pxx_packet * pxx_packet);
+void cgts_pxx_packet_reset(struct cgts_pxx_packet * pxx_packet);
+void cgts_pxx_packet_debug(struct cgts_pxx_packet * pxx_packet);
+bool cgts_pxx_packet_parse_data(struct cgts_pxx_packet * pxx_packet, uint8_t * buf, uint32_t buf_len);
+bool cgts_pxx_packet_write_data(struct cgts_pxx_packet * pxx_packet, uint8_t * buf, uint32_t buf_len);
+
+/***********/
 /* context */
+/***********/
 #define MAX_PIDS_IN_SIGNLE_MPEGTS       512
 #define MAX_PROGRAMS_IN_SIGNLE_MPEGTS   512
 #define CGTS_CONTEXT_INPUT_TYPE_FILE    1
@@ -117,16 +174,19 @@ struct cgts_context {
     bool pmt_found;
 };
 
+// base functions
 struct cgts_context * cgts_alloc_with_memory(uint8_t * buf);
 struct cgts_context * cgts_alloc_with_file(const char * filename);
 void cgts_free(struct cgts_context * context);
 void cgts_context_debug(struct cgts_context * ct);
 
+// program functions
 bool cgts_programs_exists(struct cgts_context * ct, uint16_t prog_id);
 int32_t cgts_programs_index(struct cgts_context * ct, uint16_t prog_id);
 bool cgts_program_create(struct cgts_context * ct, uint16_t prog_id, uint16_t pmt_pid);
 bool cgts_program_delete(struct cgts_context * ct, uint16_t prog_id, uint16_t pmt_pid);
 
+// pid-buf functions
 #define CGTS_PID_TYPE_PAT       0x10
 #define CGTS_PID_TYPE_PMT       0x11
 #define CGTS_PID_TYPE_PSI       0x12
@@ -136,34 +196,5 @@ bool cgts_pid_exists(struct cgts_context * ct, uint16_t pid);
 int32_t cgts_pid_buffer_index(struct cgts_context * ct, uint16_t pid);
 bool cgts_pid_create(struct cgts_context * ct, uint16_t pid);
 int16_t cgts_pid_type(struct cgts_context * ct, uint16_t pid);
-
-/* ts packet */
-struct cgts_ts_packet {
-    uint8_t sync_byte;
-    uint8_t unit_start_indicator;
-    uint16_t pid;
-    uint8_t scrambling_control;
-    uint8_t adaption_field_control;
-    uint8_t continuity_counter;
-
-    uint8_t has_adaptation;
-    uint8_t has_payload;
-
-    uint64_t pcr;
-};
-
-struct cgts_ts_packet * cgts_ts_packet_alloc();
-void cgts_ts_packet_free(struct cgts_ts_packet * tsp);
-void cgts_ts_packet_reset(struct cgts_ts_packet * tsp);
-void cgts_ts_packet_debug(struct cgts_context * ct, struct cgts_ts_packet * tsp);
-
-struct cgts_pat {
-    uint8_t table_id;
-    uint16_t stream_id;
-    uint8_t version;
-    uint8_t sec_num;
-    uint8_t last_sec_num;
-    struct cgts_program *prg;
-};
 
 #endif

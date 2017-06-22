@@ -3,6 +3,30 @@
 #define DEBUG_TS_PACKET_LAYER   0
 #define DEBUF_PES_PACKET_LAYER  0
 
+bool cgts_read_pxx_packet(struct cgts_context * ct, struct cgts_pxx_packet * pxx_packet) {
+    struct cgts_ts_packet * tsp = cgts_ts_packet_alloc();
+    uint8_t * ts_packet_buf = calloc(1, CGTS_PACKET_SIZE);
+    while(true) {
+        if (cgts_get188(ct, ts_packet_buf) == false) {
+            return false;
+        }
+
+        cgts_ts_packet_parse(ct, tsp, ts_packet_buf);
+        cgts_ts_packet_reset(tsp);
+        memset(ts_packet_buf, 0, CGTS_PACKET_SIZE);
+
+        if (ct->just_parsed_pid_buf_idx != -1) {
+            struct cgts_pid_buffer * pid_buf = ct->pid_buf[ct->just_parsed_pid_buf_idx];
+            //cgts_copy_pid_buf_to_pxx_packet();
+            
+            break;
+        }
+    }
+    free(ts_packet_buf);
+    cgts_ts_packet_free(tsp);
+    return true;
+}
+
 int64_t cgts_pes_parse_pts_dts(uint8_t * buf) {
     // following SPEC page 31
     int64_t ts_32_30 = (int64_t)(*buf & 0x0e) << 29;
@@ -81,7 +105,6 @@ bool cgts_pes_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
 #endif
     pid_buf->parsed = true;
 
-    ct->just_parsed_pid_buf_idx = cgts_pid_buffer_index(ct, pid_buf->pid);
 
     return true;
 }
@@ -314,23 +337,22 @@ bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_star
 
     // check this TS packet complete the PXX packet, if not skip following processes
     if (cgts_pid_buffer_complete(ct->pid_buf[pid_buffer_index]) == false) {
+        ct->just_parsed_pid_buf_idx = -1;
         return true;
     }
 
     switch (pid_type) {
         case CGTS_PID_TYPE_PAT:
             cgts_pat_parse(ct, ct->pid_buf[pid_buffer_index]);
-            return true;
             break;
         case CGTS_PID_TYPE_PMT:
             cgts_pmt_parse(ct, ct->pid_buf[pid_buffer_index]);
-            return true;
             break;
         case CGTS_PID_TYPE_PES:
             cgts_pes_parse(ct, ct->pid_buf[pid_buffer_index]);
-            return true;
             break;
     }
+    ct->just_parsed_pid_buf_idx = cgts_pid_buffer_index(ct, ct->pid_buf[pid_buffer_index]->pid);
 
     return true;
 }
@@ -342,7 +364,7 @@ bool cgts_analyze_ts_packet(struct cgts_context * ct, uint8_t * buf) {
     struct cgts_ts_packet * tsp = cgts_ts_packet_alloc();
     cgts_ts_packet_parse(ct, tsp, buf);
 #if DEBUG_TS_PACKET_LAYER
-    cgts_ts_packet_debug(ct, tsp);  // todo: comment the line when finished
+    cgts_ts_packet_debug(tsp);
 #endif
     cgts_ts_packet_free(tsp);
     return true;

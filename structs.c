@@ -388,6 +388,7 @@ int16_t cgts_pid_type(struct cgts_context * ct, uint16_t pid) {
     return CGTS_PID_TYPE_UNKNOWN;
 }
 
+
 /**********************************/
 /************ ts packet ***********/
 /**********************************/
@@ -414,9 +415,8 @@ void cgts_ts_packet_reset(struct cgts_ts_packet * tsp) {
     tsp->pcr = 0;
 }
 
-void cgts_ts_packet_debug(struct cgts_context * ct, struct cgts_ts_packet * tsp) {
-    fprintf(stdout, "%d: sync_byte:%x, start_flag:%d, pid:%d, cc:%d, payload:%d, adap:%d, ",
-            ct->tsp_counter,
+void cgts_ts_packet_debug(struct cgts_ts_packet * tsp) {
+    fprintf(stdout, "sync_byte:%x, start_flag:%d, pid:%d, cc:%d, payload:%d, adap:%d, ",
             tsp->sync_byte, tsp->unit_start_indicator, 
             tsp->pid, tsp->continuity_counter,
             tsp->has_payload, tsp->has_adaptation
@@ -429,4 +429,52 @@ void cgts_ts_packet_debug(struct cgts_context * ct, struct cgts_ts_packet * tsp)
         fprintf(stdout, " PCR: %lld ", tsp->pcr);
     }
     fprintf(stdout, "\n");
+}
+
+/**********************************/
+/********** ts pxx packet *********/
+/**********************************/
+struct cgts_pxx_packet * cgts_pxx_packet_alloc() {
+    struct cgts_pxx_packet * pxx_packet = calloc(1, sizeof(struct cgts_pxx_packet));
+    pxx_packet->type = CGTS_PXX_PACKET_TYPE_UNKNOWN;
+    pxx_packet->data = NULL;
+    pxx_packet->data_len = 0;
+    pxx_packet->data_cap = 0;
+    return pxx_packet;
+}
+
+void cgts_pxx_packet_free(struct cgts_pxx_packet * pxx_packet) {
+    if (pxx_packet->data != NULL) {
+        free(pxx_packet->data);
+    }
+    free(pxx_packet);
+}
+
+void cgts_pxx_packet_reset(struct cgts_pxx_packet * pxx_packet) {
+    if (pxx_packet->data != NULL) {
+        memset(pxx_packet->data, 0, pxx_packet->data_cap);
+    }
+    pxx_packet->type = CGTS_PXX_PACKET_TYPE_UNKNOWN;
+    pxx_packet->data_len = 0;
+}
+
+void cgts_pxx_packet_debug(struct cgts_pxx_packet * pxx_packet) {
+    fprintf(stdout, "pxx_packet_debug\n");
+}
+
+bool cgts_pxx_packet_write_data(struct cgts_pxx_packet * pxx_packet, uint8_t * buf, uint32_t buf_len) {
+    if (pxx_packet->data == NULL) {
+        pxx_packet->data = malloc(buf_len);
+        pxx_packet->data_cap = buf_len;
+    } else if (pxx_packet->data_cap < buf_len) {
+        pxx_packet->data = realloc(pxx_packet->data, buf_len);
+        if (pxx_packet->data == NULL) {
+            return false;
+        }
+        pxx_packet->data_cap = buf_len;
+    } 
+    memset(pxx_packet->data, 0, pxx_packet->data_cap);
+
+    memcpy(pxx_packet->data, buf, buf_len);
+    return true;
 }
