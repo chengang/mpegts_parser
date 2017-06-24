@@ -3,7 +3,7 @@
 #define DEBUG_TS_PACKET_LAYER   0
 #define DEBUF_PES_PACKET_LAYER  0
 
-bool cgts_read_pxx_packet(struct cgts_context * ct, struct cgts_pxx_packet * pxx_packet) {
+bool cgts_read_pxx_packet(struct cgts_context * ct, struct cgts_pid_buffer ** pxx_packet) {
     struct cgts_ts_packet * tsp = cgts_ts_packet_alloc();
     uint8_t * ts_packet_buf = calloc(1, CGTS_PACKET_SIZE);
     while(true) {
@@ -17,8 +17,7 @@ bool cgts_read_pxx_packet(struct cgts_context * ct, struct cgts_pxx_packet * pxx
 
         if (ct->just_parsed_pid_buf_idx != -1) {
             struct cgts_pid_buffer * pid_buf = ct->pid_buf[ct->just_parsed_pid_buf_idx];
-            //cgts_copy_pid_buf_to_pxx_packet();
-            
+            (*pxx_packet) = pid_buf;
             break;
         }
     }
@@ -103,9 +102,6 @@ bool cgts_pes_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
     print_hex(pid_buf->buf + pid_buf->payload_offset, pid_buf->buf_pos - pid_buf->payload_offset);
     printf("\n");
 #endif
-    pid_buf->parsed = true;
-
-
     return true;
 }
 
@@ -352,6 +348,7 @@ bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_star
             cgts_pes_parse(ct, ct->pid_buf[pid_buffer_index]);
             break;
     }
+    ct->pid_buf[pid_buffer_index]->parsed = true;
     ct->just_parsed_pid_buf_idx = cgts_pid_buffer_index(ct, ct->pid_buf[pid_buffer_index]->pid);
 
     return true;

@@ -135,6 +135,28 @@ void cgts_pid_buffer_free(struct cgts_pid_buffer * pid_buf) {
     free(pid_buf);
 }
 
+void cgts_pid_buffer_debug(struct cgts_pid_buffer * pid_buf) {
+    fprintf(stdout, "parsed: [%s], filled_up: [%s], "
+            , pid_buf->parsed ? "true": "false"
+            , pid_buf->filled_up ? "true": "false"
+            );
+    fprintf(stdout, "pid: %d, table_id: %d, stream_id: %02x, "
+            , pid_buf->pid
+            , pid_buf->table_id
+            , pid_buf->stream_id
+            );
+    fprintf(stdout, "expect_len: %6d, pts: %lld, dts: %lld, "
+            , pid_buf->expect_len
+            , pid_buf->pts
+            , pid_buf->dts
+            );
+    fprintf(stdout, "payload_offset: %2d, buf_pos: %6d, buf_cap: %6d\n"
+            , pid_buf->payload_offset
+            , pid_buf->buf_pos
+            , pid_buf->buf_cap
+            );
+}
+
 void cgts_pid_buffer_print_hex(struct cgts_pid_buffer * pid_buf) {
     int i;
     for(i=0;i<pid_buf->buf_pos;i++) {
@@ -213,7 +235,7 @@ struct cgts_context * cgts_alloc_with_file(const char * filename) {
 
     context->pid_buf_num = 1;
     context->pid_buf[(context->pid_buf_num - 1)] = cgts_pid_buffer_alloc(0);
-    context->just_parsed_pid_buf_idx = 0;
+    context->just_parsed_pid_buf_idx = -1;
 
     context->pat_found = false;
     context->pmt_found = false;

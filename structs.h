@@ -93,6 +93,7 @@ struct cgts_pid_buffer {
 
 struct cgts_pid_buffer * cgts_pid_buffer_alloc(uint16_t pid);
 void cgts_pid_buffer_free(struct cgts_pid_buffer * pid_buf);
+void cgts_pid_buffer_debug(struct cgts_pid_buffer * pid_buf);
 void cgts_pid_buffer_print_hex(struct cgts_pid_buffer * pid_buf);
 bool cgts_pid_buffer_append(struct cgts_pid_buffer * pid_buf, const uint8_t * ts_payload, uint32_t ts_payload_len);
 void cgts_pid_buffer_reset(struct cgts_pid_buffer * pid_buf);

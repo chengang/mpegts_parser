@@ -11,7 +11,7 @@
 #include "util.h"
 
 //bool cgts_pxx_packet_parse(struct cgts_context * ct, struct cgts_pxx_packet * pxx_packet, uint8_t * buf, uint32_t buf_len);
-bool cgts_read_pxx_packet(struct cgts_context * ct, struct cgts_pxx_packet * pxx_packet);
+bool cgts_read_pxx_packet(struct cgts_context * ct, struct cgts_pid_buffer ** pxx_packet);
 bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_start, const uint8_t * ts_payload, uint32_t ts_payload_len);
 
 int64_t cgts_pes_parse_pts_dts(uint8_t * buf);
