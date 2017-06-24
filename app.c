@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "cgts.h"
+#include "cgts_demux.h"
 
 typedef struct cgts_pid_buffer cgts_pxx_packet;
 
@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
 
     // Init
     fprintf(stderr, "ts filename:[%s]\n", argv[1]);
-    struct cgts_context * context = cgts_alloc_with_file(argv[1]);
+    struct cgts_demux_context * context = cgts_demux_context_alloc_with_file(argv[1]);
 
     // Work
     /*********************************************************/
@@ -36,6 +36,6 @@ int main(int argc, char *argv[]) {
     }
 
     // Finalize
-    cgts_free(context);
+    cgts_demux_context_free(context);
     return 0;
 }

@@ -213,45 +213,45 @@ bool cgts_pid_buffer_complete(struct cgts_pid_buffer * pid_buf) {
 }
 
 /**********************************/
-/************ context *************/
+/********* demux context **********/
 /**********************************/
 
 // todo.. start
-struct cgts_context * cgts_alloc_with_memory(uint8_t * buf) {
-    struct cgts_context * context = calloc(1, sizeof(struct cgts_context));
-    return context;
+struct cgts_demux_context * cgts_demux_context_alloc_with_memory(uint8_t * buf) {
+    struct cgts_demux_context * ct = calloc(1, sizeof(struct cgts_demux_context));
+    return ct;
 }
 // todo.. end
 
-struct cgts_context * cgts_alloc_with_file(const char * filename) {
-    struct cgts_context * context = calloc(1, sizeof(struct cgts_context));
-    context->input_type = CGTS_INPUT_TYPE_FILE;
-    context->input_fp = fopen(filename, "r");
+struct cgts_demux_context * cgts_demux_context_alloc_with_file(const char * filename) {
+    struct cgts_demux_context * ct = calloc(1, sizeof(struct cgts_demux_context));
+    ct->input_type = CGTS_INPUT_TYPE_FILE;
+    ct->input_fp = fopen(filename, "r");
 
-    context->tsp_counter = 0;
-    context->ccounter = 0;
+    ct->tsp_counter = 0;
+    ct->ccounter = 0;
 
-    context->programs_num = 0;
+    ct->programs_num = 0;
 
-    context->pid_buf_num = 1;
-    context->pid_buf[(context->pid_buf_num - 1)] = cgts_pid_buffer_alloc(0);
-    context->just_parsed_pid_buf_idx = -1;
+    ct->pid_buf_num = 1;
+    ct->pid_buf[(ct->pid_buf_num - 1)] = cgts_pid_buffer_alloc(0);
+    ct->just_parsed_pid_buf_idx = -1;
 
-    context->pat_found = false;
-    context->pmt_found = false;
-    return context;
+    ct->pat_found = false;
+    ct->pmt_found = false;
+    return ct;
 }
 
-void cgts_free(struct cgts_context * context) {
-    if (context->input_type == CGTS_INPUT_TYPE_FILE) {
-        fclose(context->input_fp);
+void cgts_demux_context_free(struct cgts_demux_context * ct) {
+    if (ct->input_type == CGTS_INPUT_TYPE_FILE) {
+        fclose(ct->input_fp);
     }
-    for(int i=0; i < context->pid_buf_num; i++) {
-        cgts_pid_buffer_free(context->pid_buf[i]);
+    for(int i=0; i < ct->pid_buf_num; i++) {
+        cgts_pid_buffer_free(ct->pid_buf[i]);
     }
 }
 
-void cgts_context_debug(struct cgts_context * ct) {
+void cgts_demux_context_debug(struct cgts_demux_context * ct) {
     fprintf(stdout, "============== mpegts information =============\n");
     if (ct->input_type == CGTS_CONTEXT_INPUT_TYPE_FILE) {
         fprintf(stdout, "| input type: file\n");
@@ -297,7 +297,7 @@ void cgts_context_debug(struct cgts_context * ct) {
 // Program Functions
 //
 
-bool cgts_programs_exists(struct cgts_context * ct, uint16_t prog_id) {
+bool cgts_demux_context_program_exist(struct cgts_demux_context * ct, uint16_t prog_id) {
     for (int i=0;i<ct->programs_num;i++) {
         if (prog_id == ct->programs[i]->program_id) {
             return true;
@@ -306,7 +306,7 @@ bool cgts_programs_exists(struct cgts_context * ct, uint16_t prog_id) {
     return false;
 }
 
-int32_t cgts_programs_index(struct cgts_context * ct, uint16_t prog_id) {
+int32_t cgts_demux_context_program_index(struct cgts_demux_context * ct, uint16_t prog_id) {
     for (int i=0;i<ct->programs_num;i++) {
         if (prog_id == ct->programs[i]->program_id) {
             return i;
@@ -315,7 +315,7 @@ int32_t cgts_programs_index(struct cgts_context * ct, uint16_t prog_id) {
     return -1;
 }
 
-bool cgts_program_create(struct cgts_context * ct, uint16_t prog_id, uint16_t pmt_pid) {
+bool cgts_demux_context_program_create(struct cgts_demux_context * ct, uint16_t prog_id, uint16_t pmt_pid) {
     if (ct->programs_num >= MAX_PROGRAMS_IN_SIGNLE_MPEGTS) {
         return false;
     }
@@ -326,7 +326,7 @@ bool cgts_program_create(struct cgts_context * ct, uint16_t prog_id, uint16_t pm
     return true;
 }
 
-bool cgts_program_delete(struct cgts_context * ct, uint16_t prog_id, uint16_t pmt_pid) {
+bool cgts_demux_context_program_delete(struct cgts_demux_context * ct, uint16_t prog_id, uint16_t pmt_pid) {
     if (ct->programs_num > MAX_PROGRAMS_IN_SIGNLE_MPEGTS) {
         return false;
     }
@@ -354,7 +354,7 @@ bool cgts_program_delete(struct cgts_context * ct, uint16_t prog_id, uint16_t pm
 // Pid-buffer Functions
 //
 
-bool cgts_pid_exists(struct cgts_context * ct, uint16_t pid) {
+bool cgts_demux_context_pid_exist(struct cgts_demux_context * ct, uint16_t pid) {
     for (int i=0;i<ct->pid_buf_num;i++) {
         if (pid == ct->pid_buf[i]->pid) {
             return true;
@@ -363,7 +363,7 @@ bool cgts_pid_exists(struct cgts_context * ct, uint16_t pid) {
     return false;
 }
 
-int32_t cgts_pid_buffer_index(struct cgts_context * ct, uint16_t pid) {
+int32_t cgts_demux_context_pid_buffer_index(struct cgts_demux_context * ct, uint16_t pid) {
     for (int i=0;i<ct->pid_buf_num;i++) {
         if (pid == ct->pid_buf[i]->pid) {
             return i;
@@ -372,7 +372,7 @@ int32_t cgts_pid_buffer_index(struct cgts_context * ct, uint16_t pid) {
     return -1;
 }
 
-bool cgts_pid_create(struct cgts_context * ct, uint16_t pid) {
+bool cgts_demux_context_pid_create(struct cgts_demux_context * ct, uint16_t pid) {
    if (ct->pid_buf_num >= MAX_PIDS_IN_SIGNLE_MPEGTS) {
        return false;
    }
@@ -383,7 +383,7 @@ bool cgts_pid_create(struct cgts_context * ct, uint16_t pid) {
    return true;
 }
 
-int16_t cgts_pid_type(struct cgts_context * ct, uint16_t pid) {
+int16_t cgts_demux_context_pid_type(struct cgts_demux_context * ct, uint16_t pid) {
     if (pid == CGTS_PID_PAT) {
         return CGTS_PID_TYPE_PAT;
     }

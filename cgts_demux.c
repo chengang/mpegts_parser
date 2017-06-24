@@ -1,9 +1,9 @@
-#include "cgts.h"
+#include "cgts_demux.h"
 
 #define DEBUG_TS_PACKET_LAYER   0
 #define DEBUF_PES_PACKET_LAYER  0
 
-bool cgts_read_pxx_packet(struct cgts_context * ct, struct cgts_pid_buffer ** pxx_packet) {
+bool cgts_read_pxx_packet(struct cgts_demux_context * ct, struct cgts_pid_buffer ** pxx_packet) {
     struct cgts_ts_packet * tsp = cgts_ts_packet_alloc();
     uint8_t * ts_packet_buf = calloc(1, CGTS_PACKET_SIZE);
     while(true) {
@@ -35,7 +35,7 @@ int64_t cgts_pes_parse_pts_dts(uint8_t * buf) {
     return ts;
 }
 
-bool cgts_pes_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) {
+bool cgts_pes_parse(struct cgts_demux_context * ct, struct cgts_pid_buffer * pid_buf) {
     //printf("hihi, i am pes!, my stream id is [%02x]\n", pid_buf->stream_id);
     if (pid_buf->stream_id == CGTS_STREAM_ID_PADDING_STREAM) {
         /* skip padding stream */
@@ -105,7 +105,7 @@ bool cgts_pes_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
     return true;
 }
 
-bool cgts_pmt_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) {
+bool cgts_pmt_parse(struct cgts_demux_context * ct, struct cgts_pid_buffer * pid_buf) {
     //printf("PMT found\n");
     uint8_t * p = pid_buf->buf;
     uint16_t program_id = (p[0] << 8) | p[1];
@@ -161,7 +161,7 @@ bool cgts_pmt_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
             es_info_length &= 0x0fff;
         }
 
-        int32_t program_index = cgts_programs_index(ct, program_id);
+        int32_t program_index = cgts_demux_context_program_index(ct, program_id);
         if (cgts_program_pid_exist(ct->programs[program_index], pid) == false) {
             cgts_program_pid_add(ct->programs[program_index], pid, stream_type);
         }
@@ -174,7 +174,7 @@ bool cgts_pmt_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
     return true;
 }
 
-bool cgts_pat_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) {
+bool cgts_pat_parse(struct cgts_demux_context * ct, struct cgts_pid_buffer * pid_buf) {
     if (pid_buf->pid != 0) {
         return false;
     }
@@ -204,11 +204,11 @@ bool cgts_pat_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
         i += 4;
 
         // fill PMT`s pid into context
-        if (cgts_programs_exists(ct, program_id) == false) {
-            cgts_program_create(ct, program_id, pmt_pid);
+        if (cgts_demux_context_program_exist(ct, program_id) == false) {
+            cgts_demux_context_program_create(ct, program_id, pmt_pid);
         } else {
-            cgts_program_delete(ct, program_id, pmt_pid);
-            cgts_program_create(ct, program_id, pmt_pid);
+            cgts_demux_context_program_delete(ct, program_id, pmt_pid);
+            cgts_demux_context_program_create(ct, program_id, pmt_pid);
         }
     }
 
@@ -216,7 +216,7 @@ bool cgts_pat_parse(struct cgts_context * ct, struct cgts_pid_buffer * pid_buf) 
     return true;
 }
 
-bool cgts_ts_packet_parse(struct cgts_context * ct, struct cgts_ts_packet * tsp, uint8_t * buf) {
+bool cgts_ts_packet_parse(struct cgts_demux_context * ct, struct cgts_ts_packet * tsp, uint8_t * buf) {
     ct->tsp_counter++;
 
     tsp->sync_byte = buf[0];
@@ -299,21 +299,21 @@ bool cgts_pid_buffer_append_psi_header(struct cgts_pid_buffer * pid_buf, const u
             , ts_payload_len - 1 /* pointer_field length */ - pointer_field - 3);
 }
 
-bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_start, const uint8_t * ts_payload, uint32_t ts_payload_len) {
-    if (cgts_pid_exists(ct, pid) == false) {
-        if (cgts_pid_create(ct, pid) == false) {
+bool cgts_pxx_packet_append(struct cgts_demux_context * ct, uint16_t pid, bool is_start, const uint8_t * ts_payload, uint32_t ts_payload_len) {
+    if (cgts_demux_context_pid_exist(ct, pid) == false) {
+        if (cgts_demux_context_pid_create(ct, pid) == false) {
             return false;
         }
     }
 
     // check ts packet type
-    int16_t pid_type = cgts_pid_type(ct, pid);
+    int16_t pid_type = cgts_demux_context_pid_type(ct, pid);
     if (pid_type == CGTS_PID_TYPE_UNKNOWN) {
         return false;
     }
 
     // join ts packets into a PXX packet
-    int32_t pid_buffer_index = cgts_pid_buffer_index(ct, pid);
+    int32_t pid_buffer_index = cgts_demux_context_pid_buffer_index(ct, pid);
     if (pid_buffer_index == -1) {
         return false;
     }
@@ -352,12 +352,12 @@ bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_star
             break;
     }
     ct->pid_buf[pid_buffer_index]->parsed = true;
-    ct->just_parsed_pid_buf_idx = cgts_pid_buffer_index(ct, ct->pid_buf[pid_buffer_index]->pid);
+    ct->just_parsed_pid_buf_idx = cgts_demux_context_pid_buffer_index(ct, ct->pid_buf[pid_buffer_index]->pid);
 
     return true;
 }
 
-bool cgts_analyze_ts_packet(struct cgts_context * ct, uint8_t * buf) {
+bool cgts_analyze_ts_packet(struct cgts_demux_context * ct, uint8_t * buf) {
     //printf("%02x\n", buf[187]);
 	//print_hex(buf, 188);
 
@@ -378,7 +378,7 @@ bool cgts_get188_from_file(FILE * fp, uint8_t * buf) {
     return false;
 }
 
-bool cgts_get188(struct cgts_context * ct, uint8_t * buf) {
+bool cgts_get188(struct cgts_demux_context * ct, uint8_t * buf) {
     if (ct->input_type == CGTS_INPUT_TYPE_FILE) {
         return cgts_get188_from_file(ct->input_fp, buf);
     } else {
@@ -386,7 +386,7 @@ bool cgts_get188(struct cgts_context * ct, uint8_t * buf) {
     }
 }
 
-void cgts_parse(struct cgts_context * ct) {
+void cgts_parse(struct cgts_demux_context * ct) {
     uint8_t ts_packet_buf[CGTS_PACKET_SIZE];
     while(true) {
         if (cgts_get188(ct, ts_packet_buf) == false) {
@@ -394,10 +394,10 @@ void cgts_parse(struct cgts_context * ct) {
         }
         cgts_analyze_ts_packet(ct, ts_packet_buf);
     }
-    cgts_context_debug(ct);
+    cgts_demux_context_debug(ct);
 }
 
-bool cgts_find_pat_and_pmt(struct cgts_context * ct) {
+bool cgts_find_pat_and_pmt(struct cgts_demux_context * ct) {
     struct cgts_ts_packet * tsp = cgts_ts_packet_alloc();
     uint8_t * ts_packet_buf = calloc(1, CGTS_PACKET_SIZE);
     while(true) {

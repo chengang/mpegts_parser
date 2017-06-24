@@ -150,14 +150,14 @@ void cgts_pxx_packet_debug(struct cgts_pxx_packet * pxx_packet);
 bool cgts_pxx_packet_parse_data(struct cgts_pxx_packet * pxx_packet, uint8_t * buf, uint32_t buf_len);
 bool cgts_pxx_packet_write_data(struct cgts_pxx_packet * pxx_packet, uint8_t * buf, uint32_t buf_len);
 
-/***********/
-/* context */
-/***********/
+/*****************/
+/* demux context */
+/*****************/
 #define MAX_PIDS_IN_SIGNLE_MPEGTS       512
 #define MAX_PROGRAMS_IN_SIGNLE_MPEGTS   512
 #define CGTS_CONTEXT_INPUT_TYPE_FILE    1
 #define CGTS_CONTEXT_INPUT_TYPE_MEMORY  2
-struct cgts_context {
+struct cgts_demux_context {
     uint8_t input_type; // 1-file, 2-memory
     FILE * input_fp;
     uint8_t * input_ptr;
@@ -176,16 +176,16 @@ struct cgts_context {
 };
 
 // base functions
-struct cgts_context * cgts_alloc_with_memory(uint8_t * buf);
-struct cgts_context * cgts_alloc_with_file(const char * filename);
-void cgts_free(struct cgts_context * context);
-void cgts_context_debug(struct cgts_context * ct);
+struct cgts_demux_context * cgts_demux_context_alloc_with_memory(uint8_t * buf);
+struct cgts_demux_context * cgts_demux_context_alloc_with_file(const char * filename);
+void cgts_demux_context_free(struct cgts_demux_context * ct);
+void cgts_demux_context_debug(struct cgts_demux_context * ct);
 
 // program functions
-bool cgts_programs_exists(struct cgts_context * ct, uint16_t prog_id);
-int32_t cgts_programs_index(struct cgts_context * ct, uint16_t prog_id);
-bool cgts_program_create(struct cgts_context * ct, uint16_t prog_id, uint16_t pmt_pid);
-bool cgts_program_delete(struct cgts_context * ct, uint16_t prog_id, uint16_t pmt_pid);
+int32_t cgts_demux_context_program_index(struct cgts_demux_context * ct, uint16_t prog_id);
+bool cgts_demux_context_program_exist(struct cgts_demux_context * ct, uint16_t prog_id);
+bool cgts_demux_context_program_create(struct cgts_demux_context * ct, uint16_t prog_id, uint16_t pmt_pid);
+bool cgts_demux_context_program_delete(struct cgts_demux_context * ct, uint16_t prog_id, uint16_t pmt_pid);
 
 // pid-buf functions
 #define CGTS_PID_TYPE_PAT       0x10
@@ -193,9 +193,30 @@ bool cgts_program_delete(struct cgts_context * ct, uint16_t prog_id, uint16_t pm
 #define CGTS_PID_TYPE_PSI       0x12
 #define CGTS_PID_TYPE_PES       0x13
 #define CGTS_PID_TYPE_UNKNOWN   0x19
-bool cgts_pid_exists(struct cgts_context * ct, uint16_t pid);
-int32_t cgts_pid_buffer_index(struct cgts_context * ct, uint16_t pid);
-bool cgts_pid_create(struct cgts_context * ct, uint16_t pid);
-int16_t cgts_pid_type(struct cgts_context * ct, uint16_t pid);
+bool cgts_demux_context_pid_exist(struct cgts_demux_context * ct, uint16_t pid);
+bool cgts_demux_context_pid_create(struct cgts_demux_context * ct, uint16_t pid);
+int16_t cgts_demux_context_pid_type(struct cgts_demux_context * ct, uint16_t pid);
+int32_t cgts_demux_context_pid_buffer_index(struct cgts_demux_context * ct, uint16_t pid);
+
+/***************/
+/* mux context */
+/***************/
+#define CGTS_CONTEXT_OUTPUT_TYPE_FILE    1
+#define CGTS_CONTEXT_OUTPUT_TYPE_MEMORY  2
+struct cgts_mux_context {
+    uint8_t output_type;    // 1-file, 2-memory
+    FILE * output_fp;
+    uint8_t * output_ptr;
+    uint32_t tsp_counter;
+    int8_t ccounter;
+
+    bool opt_mode;
+    bool pat_wrote;
+    bool pmt_wrote;
+};
+struct cgts_mux_context * cgts_mux_context_alloc_with_memory(uint8_t * buf);
+struct cgts_mux_context * cgts_mux_context_alloc_with_file(const char * filename);
+void cgts_mux_context_free(struct cgts_mux_context * ct);
+void cgts_mux_context_debug(struct cgts_mux_context * ct);
 
 #endif
