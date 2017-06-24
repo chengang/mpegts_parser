@@ -443,6 +443,16 @@ void cgts_mux_context_debug(struct cgts_mux_context * ct) {
     } else if (ct->output_type == CGTS_CONTEXT_OUTPUT_TYPE_MEMORY) {
         fprintf(stdout, "MEMORY");
     }
+    fprintf(stdout, ", ");
+    fprintf(stdout, "tsp_counter: %d, ccounter: %d, "
+            , ct->tsp_counter
+            , ct->ccounter
+            );
+    fprintf(stdout, "opt_mode: %s, pat_wrote: %s, pmt_wrote: %s"
+            , ct->opt_mode ? "yes" : "no"
+            , ct->pat_wrote ? "yes" : "no"
+            , ct->pmt_wrote ? "yes" : "no"
+            );
     fprintf(stdout, "\n");
 }
 
