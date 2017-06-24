@@ -136,16 +136,16 @@ void cgts_pid_buffer_free(struct cgts_pid_buffer * pid_buf) {
 }
 
 void cgts_pid_buffer_debug(struct cgts_pid_buffer * pid_buf) {
-    fprintf(stdout, "parsed: [%s], filled_up: [%s], "
-            , pid_buf->parsed ? "true": "false"
-            , pid_buf->filled_up ? "true": "false"
+    fprintf(stdout, "parsed: %s, filled_up: %s, "
+            , pid_buf->parsed ? "yes": "no"
+            , pid_buf->filled_up ? "yes": "no"
             );
-    fprintf(stdout, "pid: %d, table_id: %d, stream_id: %02x, "
+    fprintf(stdout, "pid: %5d, table_id: %2d, stream_id: %02x, "
             , pid_buf->pid
             , pid_buf->table_id
             , pid_buf->stream_id
             );
-    fprintf(stdout, "expect_len: %6d, pts: %lld, dts: %lld, "
+    fprintf(stdout, "expect_len: %6d, pts: %9lld, dts: %9lld, "
             , pid_buf->expect_len
             , pid_buf->pts
             , pid_buf->dts
