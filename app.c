@@ -5,23 +5,25 @@
 #include <stdlib.h>
 
 #include "cgts_demux.h"
+#include "cgts_mux.h"
 
 typedef struct cgts_pid_buffer cgts_pxx_packet;
 
 int main(int argc, char *argv[]) {
 
     // Init
-    fprintf(stderr, "ts filename:[%s]\n", argv[1]);
-    struct cgts_demux_context * context = cgts_demux_context_alloc_with_file(argv[1]);
+    char * input_filename = argv[1];
+    fprintf(stderr, "input filename:[%s]\n", input_filename);
+    struct cgts_demux_context * demux_ct = cgts_demux_context_alloc_with_file(input_filename);
 
     // Work
     /*********************************************************/
 
     // --- parse mode ---
-    //cgts_parse(context);
+    //cgts_parse(demux_ct);
 
     // --- mpegts optimize mode ---
-    //if (cgts_find_pat_and_pmt(context) == false) {
+    //if (cgts_find_pat_and_pmt(demux_ct) == false) {
     //    printf("can not find pat or pmt\n");
     //    return 1;
     //}
@@ -30,12 +32,21 @@ int main(int argc, char *argv[]) {
 
 
     // --- remux mode ---
+    char * output_filename = argv[2];
+    fprintf(stderr, "output filename:[%s]\n", output_filename);
+    struct cgts_mux_context * mux_ct = cgts_mux_context_alloc_with_file(output_filename);
     cgts_pxx_packet * packet = NULL;
-    while(cgts_read_pxx_packet(context, &packet) == true) {
+
+    cgts_mux_context_debug(mux_ct);
+
+    while(cgts_read_pxx_packet(demux_ct, &packet) == true) {
         cgts_pid_buffer_debug(packet);
     }
 
+    cgts_mux_context_free(mux_ct);
+
     // Finalize
-    cgts_demux_context_free(context);
+    cgts_demux_context_free(demux_ct);
+
     return 0;
 }

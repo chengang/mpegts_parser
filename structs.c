@@ -249,6 +249,7 @@ void cgts_demux_context_free(struct cgts_demux_context * ct) {
     for(int i=0; i < ct->pid_buf_num; i++) {
         cgts_pid_buffer_free(ct->pid_buf[i]);
     }
+    free(ct);
 }
 
 void cgts_demux_context_debug(struct cgts_demux_context * ct) {
@@ -408,6 +409,41 @@ int16_t cgts_demux_context_pid_type(struct cgts_demux_context * ct, uint16_t pid
         }
     }
     return CGTS_PID_TYPE_UNKNOWN;
+}
+
+/**********************************/
+/********** mux context ***********/
+/**********************************/
+
+struct cgts_mux_context * cgts_mux_context_alloc_with_file(const char * filename) {
+    struct cgts_mux_context * ct = calloc(1, sizeof(struct cgts_mux_context));
+    ct->output_type = CGTS_CONTEXT_OUTPUT_TYPE_FILE;
+    ct->output_fp = fopen(filename, "w");
+
+    ct->tsp_counter = 0;
+    ct->ccounter = 0;
+
+    ct->opt_mode = false;
+    ct->pat_wrote = false;
+    ct->pmt_wrote = false;
+    return ct;
+}
+
+void cgts_mux_context_free(struct cgts_mux_context * ct) {
+    if (ct->output_type == CGTS_CONTEXT_OUTPUT_TYPE_FILE) {
+        fclose(ct->output_fp);
+    }
+    free(ct);
+}
+
+void cgts_mux_context_debug(struct cgts_mux_context * ct) {
+    fprintf(stdout, "output type: ");
+    if (ct->output_type == CGTS_CONTEXT_OUTPUT_TYPE_FILE) {
+        fprintf(stdout, "FILE");
+    } else if (ct->output_type == CGTS_CONTEXT_OUTPUT_TYPE_MEMORY) {
+        fprintf(stdout, "MEMORY");
+    }
+    fprintf(stdout, "\n");
 }
 
 

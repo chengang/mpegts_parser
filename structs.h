@@ -210,7 +210,7 @@ struct cgts_mux_context {
     uint32_t tsp_counter;
     int8_t ccounter;
 
-    bool opt_mode;
+    bool opt_mode;  // todo: opt mpegts file size - decrease PAT and PMT packet number, increase PES packet size.
     bool pat_wrote;
     bool pmt_wrote;
 };
@@ -220,3 +220,4 @@ void cgts_mux_context_free(struct cgts_mux_context * ct);
 void cgts_mux_context_debug(struct cgts_mux_context * ct);
 
 #endif
+
