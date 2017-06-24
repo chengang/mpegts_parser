@@ -333,10 +333,13 @@ bool cgts_pxx_packet_append(struct cgts_context * ct, uint16_t pid, bool is_star
 
     // check this TS packet complete the PXX packet, if not skip following processes
     if (cgts_pid_buffer_complete(ct->pid_buf[pid_buffer_index]) == false) {
+        ct->pid_buf[pid_buffer_index]->parsed = false;
+        ct->pid_buf[pid_buffer_index]->filled_up = false;
         ct->just_parsed_pid_buf_idx = -1;
         return true;
     }
 
+    ct->pid_buf[pid_buffer_index]->filled_up = true;
     switch (pid_type) {
         case CGTS_PID_TYPE_PAT:
             cgts_pat_parse(ct, ct->pid_buf[pid_buffer_index]);
