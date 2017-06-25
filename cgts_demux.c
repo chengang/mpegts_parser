@@ -279,6 +279,7 @@ bool cgts_pid_buffer_append_pes_header(struct cgts_pid_buffer * pid_buf, const u
         fprintf(stdout, "PES header error\n");
         return false;
     }
+    pid_buf->type = PXX_BUF_TYPE_PES;
     pid_buf->stream_id = ts_payload[3];
     pid_buf->expect_len = (ts_payload[4] << 8) | ts_payload[5];
     //printf("expect length in header:[%d]\n", pid_buf->expect_len);
@@ -291,6 +292,7 @@ bool cgts_pid_buffer_append_psi_header(struct cgts_pid_buffer * pid_buf, const u
     uint8_t pointer_field = ts_payload[0];
     //printf("pointer_field:[%d]\n", pointer_field);
     const uint8_t * p = ts_payload + pointer_field + 1;
+    pid_buf->type = PXX_BUF_TYPE_PSI;
     pid_buf->table_id = p[0];
     pid_buf->expect_len = ( (p[1] & 0x0f) << 8) | p[2];
     return cgts_pid_buffer_append(

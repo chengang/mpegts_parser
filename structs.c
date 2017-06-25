@@ -116,6 +116,7 @@ struct cgts_pid_buffer * cgts_pid_buffer_alloc(uint16_t pid) {
     pid_buf->filled_up = false;
 
     pid_buf->pid = pid;
+    pid_buf->type = PXX_BUF_TYPE_UNKNOWN;
     pid_buf->table_id = 0;
     pid_buf->stream_id = 0;
     pid_buf->expect_len = 0;
@@ -140,6 +141,21 @@ void cgts_pid_buffer_debug(struct cgts_pid_buffer * pid_buf) {
             , pid_buf->parsed ? "yes": "no"
             , pid_buf->filled_up ? "yes": "no"
             );
+    fprintf(stdout, "type: ");
+    switch (pid_buf->type) {
+        case PXX_BUF_TYPE_UNKNOWN:
+            fprintf(stdout, "unknown, ");
+            break;
+        case PXX_BUF_TYPE_PSI:
+            fprintf(stdout, "psi, ");
+            break;
+        case PXX_BUF_TYPE_PES:
+            fprintf(stdout, "pes, ");
+            break;
+        default:
+            fprintf(stdout, "unknown, ");
+            break;
+    }
     fprintf(stdout, "pid: %5d, table_id: %2d, stream_id: %02x, "
             , pid_buf->pid
             , pid_buf->table_id
@@ -188,7 +204,7 @@ void cgts_pid_buffer_reset(struct cgts_pid_buffer * pid_buf) {
     pid_buf->parsed = false;
     pid_buf->filled_up = false;
 
-    memset(pid_buf->buf, 0, pid_buf->buf_cap);
+    pid_buf->type = PXX_BUF_TYPE_UNKNOWN;
     pid_buf->table_id = 0;
     pid_buf->stream_id = 0;
     pid_buf->expect_len = 0;
@@ -197,6 +213,7 @@ void cgts_pid_buffer_reset(struct cgts_pid_buffer * pid_buf) {
 
     pid_buf->payload_offset = 0;
 
+    memset(pid_buf->buf, 0, pid_buf->buf_cap);
     pid_buf->buf_pos = 0;
 }
 

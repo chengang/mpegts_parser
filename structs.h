@@ -73,11 +73,16 @@ bool cgts_program_pid_add(struct cgts_program * program, uint16_t pid, uint16_t 
 /* pid buffer */
 /**************/
 #define PXX_BUF_LEN_DEFAULT 1024
+
+#define PXX_BUF_TYPE_UNKNOWN    0
+#define PXX_BUF_TYPE_PSI        1
+#define PXX_BUF_TYPE_PES        2
 struct cgts_pid_buffer {
     bool parsed;
     bool filled_up;
 
     uint16_t pid;
+    uint8_t type;
     uint8_t table_id;
     uint8_t stream_id;
     uint32_t expect_len;

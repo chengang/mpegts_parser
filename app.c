@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 
     // Init
     char * input_filename = argv[1];
-    fprintf(stderr, "input filename:[%s]\n", input_filename);
+    fprintf(stderr, "input filename: \t%s\n", input_filename);
     struct cgts_demux_context * demux_ct = cgts_demux_context_alloc_with_file(input_filename);
 
     // Work
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 
     // --- remux mode ---
     char * output_filename = argv[2];
-    fprintf(stderr, "output filename:[%s]\n", output_filename);
+    fprintf(stderr, "output filename: \t%s\n", output_filename);
     struct cgts_mux_context * mux_ct = cgts_mux_context_alloc_with_file(output_filename);
     cgts_pxx_packet * packet = NULL;
 
@@ -41,6 +41,7 @@ int main(int argc, char *argv[]) {
 
     while(cgts_read_pxx_packet(demux_ct, &packet) == true) {
         cgts_pid_buffer_debug(packet);
+        cgts_write_pxx_packet(mux_ct, packet);
     }
 
     cgts_mux_context_free(mux_ct);

@@ -10,4 +10,11 @@
 #include "structs.h"
 #include "util.h"
 
+bool cgts_write_pxx_packet(struct cgts_mux_context * ct, struct cgts_pid_buffer * pid_buf);
+bool cgts_write_psi_packet_header(struct cgts_mux_context * ct, struct cgts_pid_buffer * pid_buf, uint32_t * wrote_bytes);
+bool cgts_write_pes_packet_header(struct cgts_mux_context * ct, struct cgts_pid_buffer * pid_buf, uint32_t * wrote_bytes);
+bool cgts_write_pxx_packet_payload(struct cgts_mux_context * ct, struct cgts_pid_buffer * pid_buf, uint32_t * wrote_bytes);
+bool cgts_write_ts_packet(struct cgts_mux_context * ct, bool is_pes_start, uint16_t pid, uint8_t * payload, uint16_t payload_len);
+bool cgts_write_bytes(struct cgts_mux_context * ct, uint8_t * buf, uint32_t buf_len);
+
 #endif
