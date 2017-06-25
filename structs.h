@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #define CGTS_PACKET_SIZE 188
+#define CGTS_SYNC_BYTE  0x47
 #define CGTS_INPUT_TYPE_FILE 1
 #define CGTS_INPUT_TYPE_MEMORY 2
 

@@ -48,6 +48,25 @@ bool cgts_write_pxx_packet_payload(struct cgts_mux_context *ct, struct cgts_pid_
 }
 
 bool cgts_write_ts_packet(struct cgts_mux_context * ct, bool is_pes_start, uint16_t pid, uint8_t * payload, uint16_t payload_len) {
+    uint8_t * tsp_buf = calloc(1, CGTS_PACKET_SIZE);
+
+    tsp_buf[0] = CGTS_SYNC_BYTE;
+    tsp_buf[2] = pid % 256;
+    tsp_buf[1] = (pid - pid % 256) / 256;
+    tsp_buf[1] = tsp_buf[1] & 0x1f;
+    if (is_pes_start == true) {
+        tsp_buf[1] = tsp_buf[1] | 0x40;
+    } else {
+        tsp_buf[1] = tsp_buf[1] | 0x00;
+    }
+
+    cgts_write_bytes(ct, tsp_buf, CGTS_PACKET_SIZE);
+    ct->tsp_counter = ct->tsp_counter + 1;
+    if (ct->ccounter == 15) {
+        ct->ccounter = 0;
+    } else {
+        ct->ccounter = ct->ccounter + 1;
+    }
     return true;
 }
 
