@@ -7,7 +7,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define CGTS_PACKET_SIZE 188
+#define CGTS_PACKET_SIZE                    188
+#define CGTS_TS_PACKET_HEADER_LENGTH        4
+#define CGTS_TS_PACKET_PAYLOAD_MAX_LENGTH   (CGTS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_LENGTH)
+#define CGTS_PSI_PACKET_HEADER_LENGTH       4
+#define CGTS_PES_PACKET_HEADER_LENGTH       6
+
 #define CGTS_SYNC_BYTE  0x47
 #define CGTS_INPUT_TYPE_FILE 1
 #define CGTS_INPUT_TYPE_MEMORY 2
