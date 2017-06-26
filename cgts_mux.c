@@ -30,8 +30,8 @@ bool cgts_write_psi_packet_header(struct cgts_mux_context * ct, struct cgts_pid_
         return false;
     }
 
-    uint32_t header_buf_len = CGTS_TS_PACKET_PAYLOAD_MAX_LENGTH;
-    if (pid_buf->buf_pos < CGTS_TS_PACKET_PAYLOAD_MAX_LENGTH) {
+    uint32_t header_buf_len = CGTS_TS_PACKET_PAYLOAD_MAX_SIZE;
+    if (pid_buf->buf_pos < CGTS_TS_PACKET_PAYLOAD_MAX_SIZE) {
         header_buf_len = pid_buf->buf_pos;
     }
 
@@ -47,11 +47,11 @@ bool cgts_write_psi_packet_header(struct cgts_mux_context * ct, struct cgts_pid_
     header_buf[3] = pid_buf->expect_len % 256;
     header_buf[2] = (pid_buf->expect_len - (pid_buf->expect_len % 256) ) / 256;
 
-    // CGTS_PSI_PACKET_HEADER_LENGTH == 4
-    memcpy(header_buf + CGTS_PSI_PACKET_HEADER_LENGTH, pid_buf->buf, header_buf_len - CGTS_PSI_PACKET_HEADER_LENGTH);
+    // CGTS_PSI_PACKET_HEADER_SIZE == 4
+    memcpy(header_buf + CGTS_PSI_PACKET_HEADER_SIZE, pid_buf->buf, header_buf_len - CGTS_PSI_PACKET_HEADER_SIZE);
 
     cgts_write_ts_packet(ct, true, pid_buf->pid, header_buf, header_buf_len, wrote_bytes);
-    (*wrote_bytes) = (*wrote_bytes) - CGTS_PSI_PACKET_HEADER_LENGTH;
+    (*wrote_bytes) = (*wrote_bytes) - CGTS_PSI_PACKET_HEADER_SIZE;
 
     free(header_buf);
 
@@ -63,8 +63,8 @@ bool cgts_write_pes_packet_header(struct cgts_mux_context * ct, struct cgts_pid_
         return false;
     }
 
-    uint32_t header_buf_len = CGTS_TS_PACKET_PAYLOAD_MAX_LENGTH;
-    if (pid_buf->buf_pos < CGTS_TS_PACKET_PAYLOAD_MAX_LENGTH) {
+    uint32_t header_buf_len = CGTS_TS_PACKET_PAYLOAD_MAX_SIZE;
+    if (pid_buf->buf_pos < CGTS_TS_PACKET_PAYLOAD_MAX_SIZE) {
         header_buf_len = pid_buf->buf_pos;
     }
 
@@ -82,11 +82,11 @@ bool cgts_write_pes_packet_header(struct cgts_mux_context * ct, struct cgts_pid_
     header_buf[5] = pid_buf->expect_len % 256;
     header_buf[4] = (pid_buf->expect_len - (pid_buf->expect_len % 256) ) / 256;
 
-    // CGTS_PES_PACKET_HEADER_LENGTH == 4
-    memcpy(header_buf + CGTS_PES_PACKET_HEADER_LENGTH, pid_buf->buf, header_buf_len - CGTS_PES_PACKET_HEADER_LENGTH);
+    // CGTS_PES_PACKET_HEADER_SIZE == 6
+    memcpy(header_buf + CGTS_PES_PACKET_HEADER_SIZE, pid_buf->buf, header_buf_len - CGTS_PES_PACKET_HEADER_SIZE);
 
     cgts_write_ts_packet(ct, true, pid_buf->pid, header_buf, header_buf_len, wrote_bytes);
-    (*wrote_bytes) = (*wrote_bytes) - CGTS_PES_PACKET_HEADER_LENGTH;
+    (*wrote_bytes) = (*wrote_bytes) - CGTS_PES_PACKET_HEADER_SIZE;
 
     free(header_buf);
     return true;
@@ -107,7 +107,7 @@ bool cgts_write_pxx_packet_payload(struct cgts_mux_context *ct, struct cgts_pid_
 }
 
 bool cgts_write_ts_packet(struct cgts_mux_context * ct, bool is_pes_start, uint16_t pid, uint8_t * payload, uint16_t payload_len, uint32_t * wrote_bytes) {
-    uint8_t * tsp_buf = calloc(1, CGTS_PACKET_SIZE);
+    uint8_t * tsp_buf = calloc(1, CGTS_TS_PACKET_SIZE);
 
     // first byte: sync byte
     tsp_buf[0] = CGTS_SYNC_BYTE;
@@ -129,23 +129,23 @@ bool cgts_write_ts_packet(struct cgts_mux_context * ct, bool is_pes_start, uint1
     tsp_buf[3] = tsp_buf[3] | 0x10; // adaotation field control : payload only
 
     uint16_t tsp_buf_len = 0;
-    if (payload_len <= CGTS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_LENGTH) {
+    if (payload_len <= CGTS_TS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_SIZE) {
         (*wrote_bytes) = payload_len;
-        tsp_buf_len = CGTS_TS_PACKET_HEADER_LENGTH + payload_len;
+        tsp_buf_len = CGTS_TS_PACKET_HEADER_SIZE + payload_len;
     } else {
-        (*wrote_bytes) = CGTS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_LENGTH;
-        tsp_buf_len = CGTS_PACKET_SIZE;
+        (*wrote_bytes) = CGTS_TS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_SIZE;
+        tsp_buf_len = CGTS_TS_PACKET_SIZE;
     }
 
-    for (int i=CGTS_TS_PACKET_HEADER_LENGTH;i<CGTS_PACKET_SIZE;i++) {
+    for (int i=CGTS_TS_PACKET_HEADER_SIZE;i<CGTS_TS_PACKET_SIZE;i++) {
         if (i > tsp_buf_len) {
             tsp_buf[i] = 0xff;
         } else {
-            tsp_buf[i] = payload[i - CGTS_TS_PACKET_HEADER_LENGTH];
+            tsp_buf[i] = payload[i - CGTS_TS_PACKET_HEADER_SIZE];
         }
     }
 
-    cgts_write_bytes(ct, tsp_buf, CGTS_PACKET_SIZE);
+    cgts_write_bytes(ct, tsp_buf, CGTS_TS_PACKET_SIZE);
     ct->tsp_counter = ct->tsp_counter + 1;
     if (ct->ccounter == 15) {
         ct->ccounter = 0;

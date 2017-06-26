@@ -5,7 +5,7 @@
 
 bool cgts_read_pxx_packet(struct cgts_demux_context * ct, struct cgts_pid_buffer ** pxx_packet) {
     struct cgts_ts_packet * tsp = cgts_ts_packet_alloc();
-    uint8_t * ts_packet_buf = calloc(1, CGTS_PACKET_SIZE);
+    uint8_t * ts_packet_buf = calloc(1, CGTS_TS_PACKET_SIZE);
     while(true) {
         if (cgts_get188(ct, ts_packet_buf) == false) {
             return false;
@@ -13,7 +13,7 @@ bool cgts_read_pxx_packet(struct cgts_demux_context * ct, struct cgts_pid_buffer
 
         cgts_ts_packet_parse(ct, tsp, ts_packet_buf);
         cgts_ts_packet_reset(tsp);
-        memset(ts_packet_buf, 0, CGTS_PACKET_SIZE);
+        memset(ts_packet_buf, 0, CGTS_TS_PACKET_SIZE);
 
         if (ct->just_parsed_pid_buf_idx != -1) {
             struct cgts_pid_buffer * pid_buf = ct->pid_buf[ct->just_parsed_pid_buf_idx];
@@ -231,7 +231,7 @@ bool cgts_ts_packet_parse(struct cgts_demux_context * ct, struct cgts_ts_packet 
     tsp->has_adaptation = (tsp->adaption_field_control & 2) >> 1;
     tsp->has_payload = tsp->adaption_field_control & 1;
 
-    int32_t ts_payload_len = CGTS_PACKET_SIZE;
+    int32_t ts_payload_len = CGTS_TS_PACKET_SIZE;
     const uint8_t *ts_payload = buf + 4; /*ts header*/
     ts_payload_len = ts_payload_len - 4;
 
@@ -257,7 +257,7 @@ bool cgts_ts_packet_parse(struct cgts_demux_context * ct, struct cgts_ts_packet 
     if (!(tsp->has_payload)) {
         return false;
     }
-    if (ts_payload >= buf + CGTS_PACKET_SIZE 
+    if (ts_payload >= buf + CGTS_TS_PACKET_SIZE 
             || ts_payload_len <= 0) {
         return false;
     }
@@ -373,8 +373,8 @@ bool cgts_analyze_ts_packet(struct cgts_demux_context * ct, uint8_t * buf) {
 }
 
 bool cgts_get188_from_file(FILE * fp, uint8_t * buf) {
-    int read_bytes = fread(buf, 1, CGTS_PACKET_SIZE, fp);
-    if (read_bytes == CGTS_PACKET_SIZE) {
+    int read_bytes = fread(buf, 1, CGTS_TS_PACKET_SIZE, fp);
+    if (read_bytes == CGTS_TS_PACKET_SIZE) {
         return true;
     }
     return false;
@@ -389,7 +389,7 @@ bool cgts_get188(struct cgts_demux_context * ct, uint8_t * buf) {
 }
 
 void cgts_parse(struct cgts_demux_context * ct) {
-    uint8_t ts_packet_buf[CGTS_PACKET_SIZE];
+    uint8_t ts_packet_buf[CGTS_TS_PACKET_SIZE];
     while(true) {
         if (cgts_get188(ct, ts_packet_buf) == false) {
             break;
@@ -401,7 +401,7 @@ void cgts_parse(struct cgts_demux_context * ct) {
 
 bool cgts_find_pat_and_pmt(struct cgts_demux_context * ct) {
     struct cgts_ts_packet * tsp = cgts_ts_packet_alloc();
-    uint8_t * ts_packet_buf = calloc(1, CGTS_PACKET_SIZE);
+    uint8_t * ts_packet_buf = calloc(1, CGTS_TS_PACKET_SIZE);
     while(true) {
         if (cgts_get188(ct, ts_packet_buf) == false) {
             break;
@@ -409,7 +409,7 @@ bool cgts_find_pat_and_pmt(struct cgts_demux_context * ct) {
 
         cgts_ts_packet_parse(ct, tsp, ts_packet_buf);
         cgts_ts_packet_reset(tsp);
-        memset(ts_packet_buf, 0, CGTS_PACKET_SIZE);
+        memset(ts_packet_buf, 0, CGTS_TS_PACKET_SIZE);
 
         if (ct->pat_found == true && ct->pmt_found == true) {
             break;
