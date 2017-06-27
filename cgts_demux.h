@@ -7,8 +7,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "structs.h"
-#include "util.h"
+#include "cgts_structs.h"
+#include "cgts_util.h"
 
 bool cgts_read_pxx_packet(struct cgts_demux_context * ct, struct cgts_pid_buffer ** pxx_packet);
 bool cgts_pxx_packet_append(struct cgts_demux_context * ct, uint16_t pid, bool is_start, const uint8_t * ts_payload, uint32_t ts_payload_len);

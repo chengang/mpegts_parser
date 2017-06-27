@@ -7,8 +7,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "structs.h"
-#include "util.h"
+#include "cgts_structs.h"
+#include "cgts_util.h"
 
 bool cgts_write_pxx_packet(struct cgts_mux_context * ct, struct cgts_pid_buffer * pid_buf);
 bool cgts_write_psi_packet_header(struct cgts_mux_context * ct, struct cgts_pid_buffer * pid_buf, uint32_t * wrote_bytes);

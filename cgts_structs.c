@@ -1,4 +1,4 @@
-#include "structs.h"
+#include "cgts_structs.h"
 
 /**********************************/
 /************** utils *************/

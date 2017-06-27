@@ -42,7 +42,6 @@ int main(int argc, char *argv[]) {
     while(cgts_read_pxx_packet(demux_ct, &packet) == true) {
         cgts_pid_buffer_debug(packet);
         cgts_write_pxx_packet(mux_ct, packet);
-        //return 0;
     }
 
     cgts_mux_context_free(mux_ct);
