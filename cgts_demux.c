@@ -1,7 +1,8 @@
 #include "cgts_demux.h"
 
-#define DEBUG_TS_PACKET_LAYER   0
-#define DEBUF_PES_PACKET_LAYER  0
+#define DEBUG_TS_PACKET_LAYER       0
+#define DEBUG_TS_PACKET_LAYER_HEX   0
+#define DEBUF_PES_PACKET_LAYER      0
 
 bool cgts_read_pxx_packet(struct cgts_demux_context * ct, struct cgts_pid_buffer ** pxx_packet) {
     struct cgts_ts_packet * tsp = cgts_ts_packet_alloc();
@@ -235,9 +236,16 @@ bool cgts_ts_packet_parse(struct cgts_demux_context * ct, struct cgts_ts_packet 
     const uint8_t *ts_payload = buf + 4; /*ts header*/
     ts_payload_len = ts_payload_len - 4;
 
+#if DEBUG_TS_PACKET_LAYER_HEX
+    print_hex(buf, 188);
+    printf("tsp got: ");
+#endif
     if (tsp->has_adaptation) {
         uint8_t adaptation_len = buf[4];
         uint8_t adaptation_flags = buf[5];
+#if DEBUG_TS_PACKET_LAYER_HEX
+        printf("adaptation_len: [%d]", adaptation_len);
+#endif
 
         if (adaptation_flags & 0x10) {   // PCR_flag, means a PCR is in this tspacket
             if (adaptation_len < 7) { // PCR need 6btye + 1byte flags
@@ -253,6 +261,9 @@ bool cgts_ts_packet_parse(struct cgts_demux_context * ct, struct cgts_ts_packet 
         ts_payload = ts_payload + adaptation_len /* afc length */ + 1 /* afc header */;
         ts_payload_len = ts_payload_len - adaptation_len - 1;
     }
+#if DEBUG_TS_PACKET_LAYER_HEX
+    printf("\n");
+#endif
 
     if (!(tsp->has_payload)) {
         return false;

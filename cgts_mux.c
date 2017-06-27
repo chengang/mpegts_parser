@@ -28,7 +28,8 @@ bool cgts_write_psi_packet_header(struct cgts_mux_context * ct, struct cgts_pid_
     }
 
     uint32_t header_buf_len = 0;
-    if (pid_buf->expect_len <= CGTS_TS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_SIZE - CGTS_PSI_PACKET_HEADER_SIZE) {    // means: a single ts packet can delive this psi packet
+    if (pid_buf->expect_len <= CGTS_TS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_SIZE - CGTS_PSI_PACKET_HEADER_SIZE) {
+        // in this case: A single ts packet can delive the whole psi packet.
         header_buf_len = pid_buf->expect_len + CGTS_PSI_PACKET_HEADER_SIZE;
     } else {
         header_buf_len = CGTS_TS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_SIZE;
@@ -46,7 +47,7 @@ bool cgts_write_psi_packet_header(struct cgts_mux_context * ct, struct cgts_pid_
     header_buf[3] = pid_buf->expect_len % 256;
     header_buf[2] = (pid_buf->expect_len - (pid_buf->expect_len % 256) ) / 256;
 
-    // CGTS_PSI_PACKET_HEADER_SIZE == 4
+    // CGTS_PSI_PACKET_HEADER_SIZE equal 4
     memcpy(header_buf + CGTS_PSI_PACKET_HEADER_SIZE, pid_buf->buf, header_buf_len - CGTS_PSI_PACKET_HEADER_SIZE);
 
     cgts_write_ts_packet(ct, true, pid_buf->pid, header_buf, header_buf_len, wrote_bytes);
@@ -83,9 +84,7 @@ bool cgts_write_pes_packet_header(struct cgts_mux_context * ct, struct cgts_pid_
     header_buf[5] = pid_buf->expect_len % 256;
     header_buf[4] = (pid_buf->expect_len - (pid_buf->expect_len % 256) ) / 256;
 
-    //printf("[%d],[%02x][%02x]\n", pid_buf->expect_len, header_buf[4], header_buf[5]);
-
-    // CGTS_PES_PACKET_HEADER_SIZE == 6
+    // CGTS_PES_PACKET_HEADER_SIZE equal 6
     memcpy(header_buf + CGTS_PES_PACKET_HEADER_SIZE, pid_buf->buf, header_buf_len - CGTS_PES_PACKET_HEADER_SIZE);
 
     cgts_write_ts_packet(ct, true, pid_buf->pid, header_buf, header_buf_len, wrote_bytes);
@@ -129,23 +128,59 @@ bool cgts_write_ts_packet(struct cgts_mux_context * ct, bool is_pes_start, uint1
     tsp_buf[3] = ct->ccounter;
     tsp_buf[3] = tsp_buf[3] & 0x0f;
     tsp_buf[3] = tsp_buf[3] | 0x00; // scrambling control: no scrambling
-    tsp_buf[3] = tsp_buf[3] | 0x10; // adaotation field control : payload only
 
     uint16_t tsp_buf_len = 0;
-    if (payload_len <= CGTS_TS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_SIZE) {
+    if (payload_len < CGTS_TS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_SIZE) {
+        /********************************************************************/
+        /*
+         *                       --- CASE A ---
+         *                 --- THE LAST TS PACKET ---
+         *
+         *      This is the LAST ts PACKET of a single pes packet,
+         *      we MUST use adaptaion field padding the ts packet.
+         *
+         *                                                                  */
+        /********************************************************************/
         (*wrote_bytes) = payload_len;
         tsp_buf_len = CGTS_TS_PACKET_HEADER_SIZE + payload_len;
+
+        tsp_buf[3] = tsp_buf[3] | 0x30; // adaotation field control : adaptation_field followed by payload 
+
+        /*** write adaptation_field start ***/
+        uint8_t adaptation_len = CGTS_TS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_SIZE - payload_len - 1;
+        uint8_t adaptation_flags = 0x00;
+        tsp_buf[4] = adaptation_len;
+        tsp_buf[5] = adaptation_flags;
+        for(int i=6;i<CGTS_TS_PACKET_SIZE-payload_len;i++) {
+            tsp_buf[i] = 0xff;
+        }
+        /*** write adaptation_field end ***/
+
+        /*** write payload start ***/
+        for(int j=CGTS_TS_PACKET_SIZE-payload_len;j<CGTS_TS_PACKET_SIZE;j++) {
+            tsp_buf[j] = payload[j-(CGTS_TS_PACKET_SIZE-payload_len)];
+        }
+        /*** write payload end ***/
     } else {
+        /********************************************************************/
+        /*
+         *                       --- CASE B ---
+         *                --- NOT THE LAST TS PACKET ---
+         *
+         *      This is NOT THE LAST ts packet of a single pes packet,
+         *      we fill it with only real and useful payload only,
+         *      no adaptation here.
+         *
+         *                                                                  */
+        /********************************************************************/
         (*wrote_bytes) = CGTS_TS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_SIZE;
         tsp_buf_len = CGTS_TS_PACKET_SIZE;
-    }
-
-    for (int i=CGTS_TS_PACKET_HEADER_SIZE;i<CGTS_TS_PACKET_SIZE;i++) {
-        if (i >= tsp_buf_len ) {
-            tsp_buf[i] = 0xff;
-        } else {
-            tsp_buf[i] = payload[i - CGTS_TS_PACKET_HEADER_SIZE];
+        tsp_buf[3] = tsp_buf[3] | 0x10; // adaotation field control : payload only
+        /*** write payload start ***/
+        for(int i=CGTS_TS_PACKET_HEADER_SIZE;i<CGTS_TS_PACKET_SIZE;i++) {
+            tsp_buf[i] = payload[i-CGTS_TS_PACKET_HEADER_SIZE];
         }
+        /*** write payload end ***/
     }
 
     cgts_write_bytes(ct, tsp_buf, CGTS_TS_PACKET_SIZE);
