@@ -14,9 +14,9 @@ bool cgts_write_pxx_packet(struct cgts_mux_context * ct, struct cgts_pid_buffer 
 
     if (ret == false) {
         return false;
-    } else if (wrote_bytes > pid_buf->buf_pos){
+    } else if (wrote_bytes > pid_buf->expect_len){
         return false;
-    } else if (wrote_bytes == pid_buf->buf_pos){
+    } else if (wrote_bytes == pid_buf->expect_len){
         return true;
     }
 
@@ -30,9 +30,12 @@ bool cgts_write_psi_packet_header(struct cgts_mux_context * ct, struct cgts_pid_
         return false;
     }
 
-    uint32_t header_buf_len = CGTS_TS_PACKET_PAYLOAD_MAX_SIZE;
-    if (pid_buf->buf_pos < CGTS_TS_PACKET_PAYLOAD_MAX_SIZE) {
-        header_buf_len = pid_buf->buf_pos;
+    uint32_t header_buf_len = 0;
+    printf("pos:[%d], expect:[%d]\n", pid_buf->buf_pos, pid_buf->expect_len);
+    if (pid_buf->expect_len <= CGTS_TS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_SIZE - CGTS_PSI_PACKET_HEADER_SIZE) {    // means: a single ts packet can delive this psi packet
+        header_buf_len = pid_buf->expect_len + CGTS_PSI_PACKET_HEADER_SIZE;
+    } else {
+        header_buf_len = CGTS_TS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_SIZE;
     }
 
     uint8_t * header_buf = calloc(1, header_buf_len);
@@ -63,9 +66,11 @@ bool cgts_write_pes_packet_header(struct cgts_mux_context * ct, struct cgts_pid_
         return false;
     }
 
-    uint32_t header_buf_len = CGTS_TS_PACKET_PAYLOAD_MAX_SIZE;
-    if (pid_buf->buf_pos < CGTS_TS_PACKET_PAYLOAD_MAX_SIZE) {
-        header_buf_len = pid_buf->buf_pos;
+    uint32_t header_buf_len = 0;
+    if (pid_buf->expect_len < CGTS_TS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_SIZE - CGTS_PES_PACKET_HEADER_SIZE) {
+        header_buf_len = pid_buf->expect_len + CGTS_PES_PACKET_HEADER_SIZE;
+    } else {
+        header_buf_len = CGTS_TS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_SIZE;
     }
 
     uint8_t * header_buf = calloc(1, header_buf_len);
@@ -81,6 +86,8 @@ bool cgts_write_pes_packet_header(struct cgts_mux_context * ct, struct cgts_pid_
     // 5th and 6th bytes: expect_len
     header_buf[5] = pid_buf->expect_len % 256;
     header_buf[4] = (pid_buf->expect_len - (pid_buf->expect_len % 256) ) / 256;
+
+    //printf("[%d],[%02x][%02x]\n", pid_buf->expect_len, header_buf[4], header_buf[5]);
 
     // CGTS_PES_PACKET_HEADER_SIZE == 6
     memcpy(header_buf + CGTS_PES_PACKET_HEADER_SIZE, pid_buf->buf, header_buf_len - CGTS_PES_PACKET_HEADER_SIZE);
