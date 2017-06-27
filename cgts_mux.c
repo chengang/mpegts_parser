@@ -1,9 +1,6 @@
 #include "cgts_mux.h"
 
 bool cgts_write_pxx_packet(struct cgts_mux_context * ct, struct cgts_pid_buffer * pid_buf) {
-
-    int64_t bytes_wait_for_writing = pid_buf->buf_pos;
-
     uint32_t wrote_bytes = 0;
     bool ret = false;
     if (pid_buf->type == PXX_BUF_TYPE_PSI) {
@@ -31,7 +28,6 @@ bool cgts_write_psi_packet_header(struct cgts_mux_context * ct, struct cgts_pid_
     }
 
     uint32_t header_buf_len = 0;
-    printf("pos:[%d], expect:[%d]\n", pid_buf->buf_pos, pid_buf->expect_len);
     if (pid_buf->expect_len <= CGTS_TS_PACKET_SIZE - CGTS_TS_PACKET_HEADER_SIZE - CGTS_PSI_PACKET_HEADER_SIZE) {    // means: a single ts packet can delive this psi packet
         header_buf_len = pid_buf->expect_len + CGTS_PSI_PACKET_HEADER_SIZE;
     } else {
@@ -102,11 +98,11 @@ bool cgts_write_pes_packet_header(struct cgts_mux_context * ct, struct cgts_pid_
 bool cgts_write_pxx_packet_payload(struct cgts_mux_context *ct, struct cgts_pid_buffer * pid_buf, uint32_t pid_buf_offset) {
     uint32_t wrote_bytes = 0;
     while(true) {
-        cgts_write_ts_packet(ct, false, pid_buf->pid, pid_buf->buf + pid_buf_offset, pid_buf->buf_pos - pid_buf_offset, &wrote_bytes);
+        cgts_write_ts_packet(ct, false, pid_buf->pid, pid_buf->buf + pid_buf_offset, pid_buf->expect_len - pid_buf_offset, &wrote_bytes);
         pid_buf_offset = pid_buf_offset + wrote_bytes;
-        if (pid_buf_offset == pid_buf->buf_pos) {
+        if (pid_buf_offset == pid_buf->expect_len) {
             break;
-        } else if (pid_buf_offset > pid_buf->buf_pos) {
+        } else if (pid_buf_offset > pid_buf->expect_len) {
             return false;
         }
     }
@@ -145,7 +141,7 @@ bool cgts_write_ts_packet(struct cgts_mux_context * ct, bool is_pes_start, uint1
     }
 
     for (int i=CGTS_TS_PACKET_HEADER_SIZE;i<CGTS_TS_PACKET_SIZE;i++) {
-        if (i > tsp_buf_len) {
+        if (i >= tsp_buf_len ) {
             tsp_buf[i] = 0xff;
         } else {
             tsp_buf[i] = payload[i - CGTS_TS_PACKET_HEADER_SIZE];
