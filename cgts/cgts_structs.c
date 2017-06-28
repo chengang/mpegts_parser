@@ -200,6 +200,12 @@ bool cgts_pid_buffer_append(struct cgts_pid_buffer * pid_buf, const uint8_t * ts
     return true;
 }
 
+bool cgts_pid_buffer_overwrite(struct cgts_pid_buffer * pid_buf, const uint8_t * ts_payload, uint32_t ts_payload_len) {
+    memset(pid_buf->buf, 0, pid_buf->buf_cap);
+    pid_buf->buf_pos = 0;
+    return cgts_pid_buffer_append(pid_buf, ts_payload, ts_payload_len);
+}
+
 void cgts_pid_buffer_reset(struct cgts_pid_buffer * pid_buf) {
     pid_buf->parsed = false;
     pid_buf->filled_up = false;

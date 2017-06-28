@@ -9,6 +9,81 @@
 
 typedef struct cgts_pid_buffer cgts_pxx_packet; // pxx means PSI or PES
 
+bool find_nal_unit(uint8_t * buf, uint32_t buf_len, uint32_t buf_start_pos, uint32_t * nal_start_pos, uint32_t * nal_end_pos) {
+    bool nalu_start_found = false;
+    bool nalu_end_found = false;
+    uint32_t nalu_start_pos = 0;
+    uint32_t nalu_end_pos = 0;
+
+    for (uint32_t i=buf_start_pos; i<buf_len-3; i++) {
+        if ( buf[i] == 0x00 && buf[i+1] == 0x00
+                && buf[i+2] == 0x00 && buf[i+3] == 0x01) 
+        {
+            if ( nalu_start_found == false) {
+                nalu_start_pos = i;
+                nalu_start_found = true;
+                continue;
+            } else if ( nalu_end_found == false ) {
+                nalu_end_pos = i - 1;
+                nalu_end_found = true;
+            }
+            i = i + 4;
+        }
+
+        if ( i == buf_len 
+                - 3 /* length of start code */  
+                - 1 /* last index equal length - 1 */ )
+        {
+            if ( nalu_start_found == true ) {
+                nalu_end_pos = i + 3;
+                nalu_end_found = true;
+            }
+        }
+
+        if ( nalu_start_found == true && nalu_end_found == true ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool find_adts_unit(uint8_t * buf, uint32_t buf_len, uint32_t buf_start_pos, uint32_t * adts_start_pos, uint32_t adts_end_pos) {
+    return false;
+}
+
+bool encrypt_avc_es(struct cgts_pid_buffer * pid_buf) {
+    uint32_t nalu_start_pos = 0;
+    uint32_t nalu_end_pos = 0;
+
+    uint8_t * encrypted_es = calloc(1, (2 * pid_buf->expect_len + 1024) );
+    uint32_t encrypted_es_pos = 0;
+
+    memcpy(encrypted_es + encrypted_es_pos, pid_buf->buf, pid_buf->payload_offset);
+    encrypted_es_pos = pid_buf->payload_offset;
+
+    uint32_t payload_start_pos = pid_buf->payload_offset;
+    while(find_nal_unit(pid_buf->buf, pid_buf->expect_len, payload_start_pos, &nalu_start_pos, &nalu_end_pos) == true) {
+        uint8_t nalu_type = pid_buf->buf[(nalu_start_pos + 4)] & 0x1f;
+        if (nalu_type != 0x05) {
+            // not IDR data
+            memcpy(encrypted_es, pid_buf->buf + nalu_start_pos, nalu_end_pos - nalu_start_pos + 1);
+            encrypted_es_pos = encrypted_es_pos + nalu_end_pos - nalu_start_pos + 1;
+        } else {
+            // IDR data
+            memcpy(encrypted_es, pid_buf->buf + nalu_start_pos , nalu_end_pos - nalu_start_pos + 1);
+            encrypted_es_pos = encrypted_es_pos + nalu_end_pos - nalu_start_pos + 1;
+        }
+        payload_start_pos = nalu_end_pos;
+        printf("12312312[%d]\n", nalu_end_pos);
+    }
+
+    return true;
+}
+
+bool encrypt_aac_es(struct cgts_pid_buffer * pid_buf) {
+    return true;
+}
+
 int main(int argc, char *argv[]) {
 
     char * input_filename = argv[1];
@@ -42,17 +117,21 @@ int main(int argc, char *argv[]) {
             return 0;
         }
 
-        // parse and encrypt AVC video
-        if (packet->type == PXX_BUF_TYPE_PES 
-                && packet->stream_id == CGTS_STREAM_ID_VIDEO_MPEG1_MPEG2_MPEG4_AVC
-                ) {
-        }
-
         // parse and encrypt AAC audio
         if (packet->type == PXX_BUF_TYPE_PES &&
                 ( packet->stream_id == CGTS_STREAM_ID_AUDIO_MPEG1_MPEG2_MPEG4_AAC
                   || packet->stream_id == CGTS_STREAM_ID_PRIVATE_STREAM_1
-                ) ) {
+                ) ) 
+        {
+            encrypt_aac_es(packet);
+        }
+
+        // parse and encrypt AVC video
+        if (packet->type == PXX_BUF_TYPE_PES 
+                && packet->stream_id == CGTS_STREAM_ID_VIDEO_MPEG1_MPEG2_MPEG4_AVC
+                ) 
+        {
+            encrypt_avc_es(packet);
         }
 
         cgts_write_pxx_packet(mux_ct, packet);
