@@ -30,7 +30,7 @@ bool find_nal_unit(uint8_t * buf, uint32_t buf_len, uint32_t buf_start_pos, uint
         }
 
         if ( i == buf_len 
-                - 3 /* length of start code */  
+                - 3 /* length of start code - 1 (4-1) */  
                 - 1 /* last index equal length - 1 */ )
         {
             if ( nalu_start_found == true ) {
@@ -48,10 +48,46 @@ bool find_nal_unit(uint8_t * buf, uint32_t buf_len, uint32_t buf_start_pos, uint
     return false;
 }
 
-bool find_adts_unit(uint8_t * buf, uint32_t buf_len, uint32_t buf_start_pos, uint32_t * adts_start_pos, uint32_t adts_end_pos) {
+bool find_adts_unit(uint8_t * buf, uint32_t buf_len, uint32_t buf_start_pos, uint32_t * adts_start_pos, uint32_t * adts_end_pos) {
+    bool adtsu_start_found = false;
+    bool adtsu_end_found = false;
+    uint32_t adtsu_start_pos = 0;
+    uint32_t adtsu_end_pos = 0;
+
+    for (uint32_t i=buf_start_pos; i<buf_len-1; i++) {
+        if ( buf[i] == 0xff 
+                && buf[i+1] == 0xf1)
+        {
+            if ( adtsu_start_found == false) {
+                adtsu_start_pos = i;
+                adtsu_start_found = true;
+            } else if ( adtsu_end_found == false ) {
+                adtsu_end_pos = i - 1;
+                adtsu_end_found = true;
+            }
+            i = i + 2;
+        }
+
+        if ( i == buf_len 
+                - 1 /* length of start code - 1 (2-1)*/
+                - 1 /* last index equal length - 1 */ )
+        {
+            if ( adtsu_start_found == true ) {
+                adtsu_end_pos = i + 1;
+                adtsu_end_found = true;
+            }
+        }
+
+        if ( adtsu_start_found == true && adtsu_end_found == true ) {
+            (* adts_start_pos) = adtsu_start_pos;
+            (* adts_end_pos) = adtsu_end_pos;
+            return true;
+        }
+    }
     return false;
 }
 
+#define CGTS_NAL_HEADER_SIZE   5
 bool encrypt_avc_es(struct cgts_pid_buffer * pid_buf) {
     uint32_t nalu_start_pos = 0;
     uint32_t nalu_end_pos = 0;
@@ -65,14 +101,26 @@ bool encrypt_avc_es(struct cgts_pid_buffer * pid_buf) {
     uint32_t payload_start_pos = pid_buf->payload_offset;
     while(find_nal_unit(pid_buf->buf, pid_buf->expect_len, payload_start_pos, &nalu_start_pos, &nalu_end_pos) == true) {
         uint8_t nalu_type = pid_buf->buf[(nalu_start_pos + 4)] & 0x1f;
-        if (nalu_type != 0x05) {
-            // not IDR data
+        if (nalu_type == 0x05) {
+            // IDR data
+            // first 5 bytes is NAL header, DO NOT encrypt that.
+            memcpy(encrypted_es + encrypted_es_pos
+                    , pid_buf->buf + nalu_start_pos
+                    , CGTS_NAL_HEADER_SIZE);
+            encrypted_es_pos = encrypted_es_pos + CGTS_NAL_HEADER_SIZE;
+
+            // encrypt nal payload bytes
+            memcpy(encrypted_es + encrypted_es_pos
+                    , pid_buf->buf + nalu_start_pos + CGTS_NAL_HEADER_SIZE
+                    , nalu_end_pos - nalu_start_pos + 1 - CGTS_NAL_HEADER_SIZE);
+            encrypted_es_pos = encrypted_es_pos + ( nalu_end_pos - nalu_start_pos + 1 - CGTS_NAL_HEADER_SIZE );
+
             memcpy(encrypted_es + encrypted_es_pos
                     , pid_buf->buf + nalu_start_pos
                     , nalu_end_pos - nalu_start_pos + 1);
             encrypted_es_pos = encrypted_es_pos + nalu_end_pos - nalu_start_pos + 1;
         } else {
-            // IDR data
+            // not IDR data
             memcpy(encrypted_es + encrypted_es_pos
                     , pid_buf->buf + nalu_start_pos
                     , nalu_end_pos - nalu_start_pos + 1);
@@ -89,7 +137,53 @@ bool encrypt_avc_es(struct cgts_pid_buffer * pid_buf) {
     return true;
 }
 
+#define CGTS_ADTS_HEADER_SIZE   7
 bool encrypt_aac_es(struct cgts_pid_buffer * pid_buf) {
+    uint32_t adtsu_start_pos = 0;
+    uint32_t adtsu_end_pos = 0;
+
+    uint8_t * encrypted_es = calloc(1, (2 * pid_buf->expect_len + 1024) );
+    uint32_t encrypted_es_pos = 0;
+
+    memcpy(encrypted_es + encrypted_es_pos, pid_buf->buf, pid_buf->payload_offset);
+    encrypted_es_pos = pid_buf->payload_offset;
+
+    uint32_t payload_start_pos = pid_buf->payload_offset;
+    while(find_adts_unit(pid_buf->buf, pid_buf->expect_len, payload_start_pos, &adtsu_start_pos, &adtsu_end_pos) == true) {
+        /* 
+         * checking calculation frame length code 
+
+        uint16_t frame_length = 
+            ((pid_buf->buf[adtsu_start_pos + 3] & 0x03) << 14)
+            | (pid_buf->buf[adtsu_start_pos + 4] << 3)
+            | ((pid_buf->buf[adtsu_start_pos + 5] & 0xe0) >> 5);
+
+        printf("start: [%d], end: [%d], length: [%d]=[%d]\n"
+                , adtsu_start_pos, adtsu_end_pos
+                , frame_length
+                , adtsu_end_pos - adtsu_start_pos + 1);
+
+        */
+
+        // first 7 bytes is ADTS header, DO NOT encrypt that.
+        memcpy(encrypted_es + encrypted_es_pos
+                , pid_buf->buf + adtsu_start_pos
+                , CGTS_ADTS_HEADER_SIZE);
+        encrypted_es_pos = encrypted_es_pos + CGTS_ADTS_HEADER_SIZE;
+
+        // encrypt adts payload bytes
+        memcpy(encrypted_es + encrypted_es_pos
+                , pid_buf->buf + adtsu_start_pos + CGTS_ADTS_HEADER_SIZE
+                , adtsu_end_pos - adtsu_start_pos + 1 - CGTS_ADTS_HEADER_SIZE);
+        encrypted_es_pos = encrypted_es_pos + ( adtsu_end_pos - adtsu_start_pos + 1 - CGTS_ADTS_HEADER_SIZE );
+
+        payload_start_pos = adtsu_end_pos;
+        //printf("adtsu start at:[%d], end at:[%d]\n", adtsu_start_pos, adtsu_end_pos);
+    }
+
+    //print_hex(encrypted_es, encrypted_es_pos);
+    cgts_pid_buffer_overwrite(pid_buf, encrypted_es, encrypted_es_pos);
+    pid_buf->expect_len = encrypted_es_pos;
     return true;
 }
 
@@ -106,7 +200,7 @@ int main(int argc, char *argv[]) {
     cgts_pxx_packet * packet = NULL;
     while(cgts_read_pxx_packet(demux_ct, &packet) == true) {
         cgts_pid_buffer_debug(packet);
-        print_hex(packet->buf + packet->payload_offset, packet->expect_len - packet->payload_offset);
+        //print_hex(packet->buf + packet->payload_offset, packet->expect_len - packet->payload_offset);
 
         // check ts packet type
         if (packet->type != PXX_BUF_TYPE_PSI && packet->type != PXX_BUF_TYPE_PES) {
