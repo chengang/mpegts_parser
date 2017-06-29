@@ -22,7 +22,6 @@ bool find_nal_unit(uint8_t * buf, uint32_t buf_len, uint32_t buf_start_pos, uint
             if ( nalu_start_found == false) {
                 nalu_start_pos = i;
                 nalu_start_found = true;
-                continue;
             } else if ( nalu_end_found == false ) {
                 nalu_end_pos = i - 1;
                 nalu_end_found = true;
@@ -41,6 +40,8 @@ bool find_nal_unit(uint8_t * buf, uint32_t buf_len, uint32_t buf_start_pos, uint
         }
 
         if ( nalu_start_found == true && nalu_end_found == true ) {
+            (* nal_start_pos) = nalu_start_pos;
+            (* nal_end_pos) = nalu_end_pos;
             return true;
         }
     }
@@ -66,16 +67,24 @@ bool encrypt_avc_es(struct cgts_pid_buffer * pid_buf) {
         uint8_t nalu_type = pid_buf->buf[(nalu_start_pos + 4)] & 0x1f;
         if (nalu_type != 0x05) {
             // not IDR data
-            memcpy(encrypted_es, pid_buf->buf + nalu_start_pos, nalu_end_pos - nalu_start_pos + 1);
+            memcpy(encrypted_es + encrypted_es_pos
+                    , pid_buf->buf + nalu_start_pos
+                    , nalu_end_pos - nalu_start_pos + 1);
             encrypted_es_pos = encrypted_es_pos + nalu_end_pos - nalu_start_pos + 1;
         } else {
             // IDR data
-            memcpy(encrypted_es, pid_buf->buf + nalu_start_pos , nalu_end_pos - nalu_start_pos + 1);
+            memcpy(encrypted_es + encrypted_es_pos
+                    , pid_buf->buf + nalu_start_pos
+                    , nalu_end_pos - nalu_start_pos + 1);
             encrypted_es_pos = encrypted_es_pos + nalu_end_pos - nalu_start_pos + 1;
         }
         payload_start_pos = nalu_end_pos;
-        printf("12312312[%d]\n", nalu_end_pos);
+        //printf("nalu start at:[%d], end at:[%d]\n", nalu_start_pos, nalu_end_pos);
     }
+
+    //print_hex(encrypted_es, encrypted_es_pos);
+    cgts_pid_buffer_overwrite(pid_buf, encrypted_es, encrypted_es_pos);
+    pid_buf->expect_len = encrypted_es_pos;
 
     return true;
 }
