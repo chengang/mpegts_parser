@@ -1,6 +1,6 @@
 CCOMP = clang
-CFLAGS = -I ../cgts
-CLIBS = ../cgts/cgts_demux.c ../cgts/cgts_mux.c ../cgts/cgts_structs.c ../cgts/cgts_nal_adts_parse.c ../cgts/cgts_util.c
+CFLAGS = -I ../cgts -I ../cg_crypto
+CLIBS = ../cgts/cgts_demux.c ../cgts/cgts_mux.c ../cgts/cgts_structs.c ../cgts/cgts_nal_adts_parse.c ../cgts/cgts_util.c ../cg_crypto/aes128.c
 
 T01:
 	$(CCOMP) example_remux.c   $(CLIBS) $(CFLAGS) -o cgts_remux

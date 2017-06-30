@@ -21,6 +21,8 @@ int main(int argc, char *argv[]) {
 
     cgts_pxx_packet * packet = NULL;
     while(cgts_read_pxx_packet(demux_ct, &packet) == true) {
+        cgts_pid_buffer_debug(packet);
+        print_hex(packet->buf + packet->payload_offset, packet->expect_len - packet->payload_offset);
         cgts_write_pxx_packet(mux_ct, packet);
     }
 

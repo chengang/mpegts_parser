@@ -7,6 +7,21 @@
 #include "cgts_demux.h"
 #include "cgts_mux.h"
 #include "cgts_nal_adts_parse.h"
+#include "aes128.h"
+
+uint8_t key[16] = {
+	 0x00, 0x00, 0x00, 0x00
+	,0x00, 0x00, 0x00, 0x00
+	,0x00, 0x00, 0x00, 0x00
+	,0x00, 0x00, 0x00, 0x00
+};
+
+uint8_t iv[16] = {
+	 0x00, 0x00, 0x00, 0x00
+	,0x00, 0x00, 0x00, 0x00
+	,0x00, 0x00, 0x00, 0x00
+	,0x00, 0x00, 0x00, 0x00
+};
 
 bool encrypt_avc_es(struct cgts_pid_buffer * pid_buf) {
     uint32_t nalu_start_pos = 0;
@@ -31,10 +46,18 @@ bool encrypt_avc_es(struct cgts_pid_buffer * pid_buf) {
             encrypted_es_pos = encrypted_es_pos + CGTS_NAL_HEADER_SIZE;
 
             // encrypt NAL payload bytes
-            memcpy(encrypted_es + encrypted_es_pos
+            uint32_t payload_len = nalu_end_pos - nalu_start_pos + 1 - CGTS_NAL_HEADER_SIZE;
+            uint8_t * buf4enc = calloc(1, payload_len + 16 /* AES128 block size */);
+            uint32_t buf4enc_len = AES128_CBC_encrypt_buffer(
+                    buf4enc
                     , pid_buf->buf + nalu_start_pos + CGTS_NAL_HEADER_SIZE
-                    , nalu_end_pos - nalu_start_pos + 1 - CGTS_NAL_HEADER_SIZE);
-            encrypted_es_pos = encrypted_es_pos + ( nalu_end_pos - nalu_start_pos + 1 - CGTS_NAL_HEADER_SIZE );
+                    , payload_len
+                    , key, iv);
+            memcpy(encrypted_es + encrypted_es_pos
+                    , buf4enc
+                    , buf4enc_len);
+            encrypted_es_pos = encrypted_es_pos + buf4enc_len;
+			free(buf4enc);
         } else {
             // not IDR data
             memcpy(encrypted_es + encrypted_es_pos
@@ -88,10 +111,18 @@ bool encrypt_aac_es(struct cgts_pid_buffer * pid_buf) {
         encrypted_es_pos = encrypted_es_pos + CGTS_ADTS_HEADER_SIZE;
 
         // encrypt ADTS payload bytes
-        memcpy(encrypted_es + encrypted_es_pos
-                , pid_buf->buf + adtsu_start_pos + CGTS_ADTS_HEADER_SIZE
-                , adtsu_end_pos - adtsu_start_pos + 1 - CGTS_ADTS_HEADER_SIZE);
-        encrypted_es_pos = encrypted_es_pos + ( adtsu_end_pos - adtsu_start_pos + 1 - CGTS_ADTS_HEADER_SIZE );
+		uint32_t payload_len = adtsu_end_pos - adtsu_start_pos + 1 - CGTS_ADTS_HEADER_SIZE;
+		uint8_t * buf4enc = calloc(1, payload_len + 16 /* AES128 block size */);
+		uint32_t buf4enc_len = AES128_CBC_encrypt_buffer(
+				buf4enc
+				, pid_buf->buf + adtsu_start_pos + CGTS_ADTS_HEADER_SIZE
+				, payload_len
+				, key, iv);
+		memcpy(encrypted_es + encrypted_es_pos
+				, buf4enc
+				, buf4enc_len);
+        encrypted_es_pos = encrypted_es_pos + buf4enc_len;
+        free(buf4enc);
 
         payload_start_pos = adtsu_end_pos;
         //printf("adtsu start at:[%d], end at:[%d]\n", adtsu_start_pos, adtsu_end_pos);

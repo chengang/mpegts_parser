@@ -494,7 +494,7 @@ static void XorWithIv(uint8_t* buf)
   }
 }
 
-void AES128_CBC_encrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, const uint8_t* key, const uint8_t* iv)
+int AES128_CBC_encrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, const uint8_t* key, const uint8_t* iv)
 {
   // Skip the key expansion if key is passed as 0
   if(NULL != key)
@@ -512,6 +512,7 @@ void AES128_CBC_encrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length,
   state = (state_t*)output;
 
   uint8_t remainders = length % KEYLEN; /* Remaining bytes in the last non-full block */
+  uint32_t output_len = 0;
   for(uintptr_t i = 0; i <= length; i += KEYLEN)
   {
     if (i + KEYLEN > length) {
@@ -530,7 +531,9 @@ void AES128_CBC_encrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length,
     Iv = output;
     input += KEYLEN;
     output += KEYLEN;
+    output_len += KEYLEN;
   }
+  return output_len;
 }
 
 int AES128_CBC_decrypt_buffer(uint8_t* output, uint8_t* input, int length, const uint8_t* key, const uint8_t* iv)
