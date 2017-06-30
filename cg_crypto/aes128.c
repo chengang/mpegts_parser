@@ -496,41 +496,40 @@ static void XorWithIv(uint8_t* buf)
 
 void AES128_CBC_encrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length, const uint8_t* key, const uint8_t* iv)
 {
-  uintptr_t i;
-  uint8_t remainders = length % KEYLEN; /* Remaining bytes in the last non-full block */
-
-  BlockCopy(output, input);
-  state = (state_t*)output;
-
   // Skip the key expansion if key is passed as 0
-  if(0 != key)
+  if(NULL != key)
   {
     Key = key;
     KeyExpansion();
   }
 
-  if(iv != 0)
+  if(iv != NULL)
   {
     Iv = (uint8_t*)iv;
   }
 
-  for(i = 0; i < length; i += KEYLEN)
+  BlockCopy(output, input);
+  state = (state_t*)output;
+
+  uint8_t remainders = length % KEYLEN; /* Remaining bytes in the last non-full block */
+  for(uintptr_t i = 0; i <= length; i += KEYLEN)
   {
-    XorWithIv(input);
-    BlockCopy(output, input);
+    if (i + KEYLEN > length) {
+      // PKCS7 Padding
+      uint8_t * last_block = (uint8_t *) malloc(KEYLEN);
+      memset(last_block, KEYLEN - remainders, KEYLEN);
+      memcpy(last_block, input, remainders);
+      XorWithIv(last_block);
+      BlockCopy(output, last_block);
+    } else {
+      XorWithIv(input);
+      BlockCopy(output, input);
+    }
     state = (state_t*)output;
     Cipher();
     Iv = output;
     input += KEYLEN;
     output += KEYLEN;
-  }
-
-  if(remainders)
-  {
-    BlockCopy(output, input);
-    memset(output + remainders, 0, KEYLEN - remainders); /* add 0-padding */
-    state = (state_t*)output;
-    Cipher();
   }
 }
 
@@ -545,14 +544,14 @@ int AES128_CBC_decrypt_buffer(uint8_t* output, uint8_t* input, int length, const
   state = (state_t*)output;
 
   // Skip the key expansion if key is passed as 0
-  if(0 != key)
+  if(NULL != key)
   {
     Key = key;
     KeyExpansion();
   }
 
   // If iv is passed as 0, we continue to encrypt without re-setting the Iv
-  if(iv != 0)
+  if(iv != NULL)
   {
     Iv = (uint8_t*)iv;
   }
@@ -576,13 +575,8 @@ int AES128_CBC_decrypt_buffer(uint8_t* output, uint8_t* input, int length, const
     InvCipher();
   }
 
-  // The following two lines may cause error when short data pass in
-  // Flash Player runs OK without padding process
-  //
   int padding_len = ori_output_buf_ptr[length - 1];
   return length - padding_len;
-  
-  //return length;
 }
 
 #endif // #if defined(CBC) && CBC
