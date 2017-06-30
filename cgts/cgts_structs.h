@@ -101,6 +101,7 @@ struct cgts_pid_buffer {
     uint32_t buf_pos;
     uint32_t buf_cap;
 };
+typedef struct cgts_pid_buffer cgts_pxx_packet; // pxx means PSI or PES
 
 struct cgts_pid_buffer * cgts_pid_buffer_alloc(uint16_t pid);
 void cgts_pid_buffer_free(struct cgts_pid_buffer * pid_buf);

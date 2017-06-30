@@ -51,10 +51,6 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-San_Diego_Clip.ts
-cgts
 *.ts
 1
-cgts_analyse
-cgts_remux
 cgts_examples/cgts_*
